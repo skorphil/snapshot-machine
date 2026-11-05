@@ -1,0 +1,11 @@
+{
+  "name": "@btrbk-gui/backend",
+  "version": "0.1.0",
+  "exports": "./main.ts",
+  "tasks": {
+    "dev": "deno run --watch --allow-net --allow-read --allow-run main.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "workspace": [
+    "./packages/backend",
+    "./packages/frontend"
+  ],
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "dev": "deno task dev:backend & deno task dev:frontend",
+    "dev:backend": "deno task --cwd packages/backend dev",
+    "dev:frontend": "deno task --cwd packages/frontend dev",
+    "check": "deno check packages/**/*.ts packages/**/*.tsx"
+  }
+}
