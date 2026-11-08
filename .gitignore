@@ -7,6 +7,7 @@ node_modules/
 dist/
 dist-ssr/
 *.local
+.vite
 
 # Editor
 .vscode/*
@@ -19,3 +20,9 @@ dist-ssr/
 *.log
 *.deb
 *.rpm
+
+# Deno Desktop build artifacts
+# These are kept in package dist directories
+# Final installers go to root dist/ (already ignored)
+/.deno-desktop/
+

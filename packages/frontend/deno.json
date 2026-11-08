@@ -18,6 +18,7 @@
     "noFallthroughCasesInSwitch": true
   },
   "imports": {
+    "@/": "./src/",
     "react": "npm:react@^19.3.1",
     "react-dom": "npm:react-dom@^19.3.1",
     "@types/node": "npm:@types/node@^24.19.2",

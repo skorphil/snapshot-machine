@@ -1,0 +1,38 @@
+{
+  "workspace": [
+    "./packages/backend",
+    "./packages/frontend",
+    "./packages/shared"
+  ],
+  "nodeModulesDir": "auto",
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/path": "jsr:@std/path@1",
+    "@btrbk-gui/shared/": "./packages/shared/",
+    "@btrbk-gui/backend/": "./packages/backend/src/",
+    "dbus-next": "npm:dbus-next@0.10.2"
+  },
+  "tasks": {
+    "build:frontend": {
+      "description": "Build the frontend bundle with Vite",
+      "command": "deno task --cwd packages/frontend build"
+    },
+    "dev": {
+      "description": "Run Vite dev server and Deno Desktop with HMR",
+      "command": "deno run --allow-run --allow-env scripts/dev.ts"
+    },
+    "serve": {
+      "description": "Build the frontend and run the packaged Deno Desktop application",
+      "dependencies": ["build:frontend"],
+      "command": "deno task --cwd packages/backend start && ./packages/backend/dist/dist"
+    },
+    "check": {
+      "description": "Type-check backend, shared, and frontend source files",
+      "command": "deno check packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src scripts/dev.ts"
+    },
+    "lint": {
+      "description": "Lint backend, shared, frontend, and script source files",
+      "command": "deno lint packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src scripts/dev.ts"
+    }
+  }
+}
