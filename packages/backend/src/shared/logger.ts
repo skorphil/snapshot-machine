@@ -1,4 +1,4 @@
-import { createLogger } from "@btrbk-gui/shared/logger.ts";
+import { createLogger } from "@snapshot-machine/shared/logger.ts";
 
 /** Application logger for the backend, scoped as `backend`. */
 export const logger = createLogger("backend", {

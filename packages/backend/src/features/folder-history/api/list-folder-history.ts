@@ -1,7 +1,7 @@
 import { isAbsolute, join, relative, SEPARATOR } from "@std/path";
-import type { FileHistoryEntry } from "@btrbk-gui/shared/types.ts";
+import type { FileHistoryEntry } from "@snapshot-machine/shared/types.ts";
 import { parseConfig, type VolumeConfig } from "../btrbk-config-parser.ts";
-import { logger } from "@btrbk-gui/backend/shared/logger.ts";
+import { logger } from "@snapshot-machine/backend/shared/logger.ts";
 
 const SNAPSHOT_TIMESTAMP =
   /\.(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(?:_\d+)?$/;

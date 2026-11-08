@@ -1,7 +1,7 @@
 import type {
   FileHistoryEntry,
   FileVersion,
-} from "@btrbk-gui/shared/types.ts";
+} from "@snapshot-machine/shared/types.ts";
 import { getBindings } from "@/shared/bindings.ts";
 import { logger } from "@/shared/logger.ts";
 

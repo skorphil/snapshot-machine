@@ -8,8 +8,8 @@
   "imports": {
     "@std/assert": "jsr:@std/assert@1",
     "@std/path": "jsr:@std/path@1",
-    "@btrbk-gui/shared/": "./packages/shared/",
-    "@btrbk-gui/backend/": "./packages/backend/src/",
+    "@snapshot-machine/shared/": "./packages/shared/",
+    "@snapshot-machine/backend/": "./packages/backend/src/",
     "dbus-next": "npm:dbus-next@0.10.2"
   },
   "tasks": {

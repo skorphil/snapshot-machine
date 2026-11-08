@@ -1,5 +1,5 @@
 {
-  "name": "@btrbk-gui/backend",
+  "name": "@snapshot-machine/backend",
   "version": "0.1.0",
   "exports": "./main.ts",
   "tasks": {

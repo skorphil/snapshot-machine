@@ -11,7 +11,9 @@ import type { PortalOptions } from "./types.ts";
  * advance.
  */
 export function createHandleToken(): string {
-  return `btrbk_${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`;
+  return `snapshot_machine_${
+    crypto.randomUUID().replaceAll("-", "").slice(0, 16)
+  }`;
 }
 
 /**

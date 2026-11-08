@@ -1,5 +1,5 @@
 {
-  "name": "@btrbk-gui/shared",
+  "name": "@snapshot-machine/shared",
   "version": "0.1.0",
   "exports": {
     "./logger.ts": "./logger.ts",

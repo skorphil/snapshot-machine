@@ -1,5 +1,5 @@
 /**
- * Development orchestrator for btrbk-gui.
+ * Development orchestrator for Snapshot Machine.
  * Spawns the Vite dev server and the Deno Desktop application.
  * Ensures both processes are terminated when the window is closed or on Ctrl+C.
  */

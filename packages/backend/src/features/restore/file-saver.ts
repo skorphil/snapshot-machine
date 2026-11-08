@@ -1,5 +1,5 @@
-import type { SaveFileOptions } from "@btrbk-gui/shared/types.ts";
-import { showPortalFileDialog } from "@btrbk-gui/backend/shared/xdg-portal/index.ts";
+import type { SaveFileOptions } from "@snapshot-machine/shared/types.ts";
+import { showPortalFileDialog } from "@snapshot-machine/backend/shared/xdg-portal/index.ts";
 
 /**
  * Opens the XDG Desktop Portal save dialog and resolves with the chosen

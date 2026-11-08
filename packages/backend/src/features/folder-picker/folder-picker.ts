@@ -1,7 +1,7 @@
 import {
   logger,
   showPortalFileDialog,
-} from "@btrbk-gui/backend/shared/xdg-portal/index.ts";
+} from "@snapshot-machine/backend/shared/xdg-portal/index.ts";
 
 const PICKER_TITLE = "Select folder";
 

@@ -2,7 +2,10 @@ import { useState } from "react";
 import type { DateMode } from "../model/types.ts";
 import { isDateMode } from "../model/types.ts";
 import { formatDate, getDisplayDate } from "../model/dates.ts";
-import type { FileHistoryEntry, FileVersion } from "@btrbk-gui/shared/types.ts";
+import type {
+  FileHistoryEntry,
+  FileVersion,
+} from "@snapshot-machine/shared/types.ts";
 import { listFolderHistory, pickFolder, restoreFile } from "../api/index.ts";
 import { logger } from "@/shared/logger.ts";
 import { logFromWebview } from "@/shared/bindings.ts";

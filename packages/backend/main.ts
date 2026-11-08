@@ -1,24 +1,24 @@
-import type { DesktopBindings } from "@btrbk-gui/shared/types.ts";
+import type { DesktopBindings } from "@snapshot-machine/shared/types.ts";
 import { fileURLToPath } from "node:url";
-import { logger } from "@btrbk-gui/backend/shared/logger.ts";
-import { listFolderHistory } from "@btrbk-gui/backend/features/folder-history/index.ts";
-import { pickFolder } from "@btrbk-gui/backend/features/folder-picker/index.ts";
+import { logger } from "@snapshot-machine/backend/shared/logger.ts";
+import { listFolderHistory } from "@snapshot-machine/backend/features/folder-history/index.ts";
+import { pickFolder } from "@snapshot-machine/backend/features/folder-picker/index.ts";
 import {
   restoreFile,
   saveFile,
-} from "@btrbk-gui/backend/features/restore/index.ts";
+} from "@snapshot-machine/backend/features/restore/index.ts";
 
 // `Deno.BrowserWindow` only exists when running inside `deno desktop` and is
 // not part of Deno's type definitions, so it is read reflectively.
 const browserWindowConstructor: unknown = Reflect.get(Deno, "BrowserWindow");
 
 if (typeof browserWindowConstructor !== "function") {
-  throw new Error("btrbk-gui must be started with `deno desktop`.");
+  throw new Error("Snapshot Machine must be started with `deno desktop`.");
 }
 
 const BrowserWindow = browserWindowConstructor as BrowserWindowConstructor;
 const win = new BrowserWindow({
-  title: "btrbk-gui",
+  title: "Snapshot Machine",
   width: 1000,
   height: 700,
 });
@@ -134,18 +134,20 @@ function proxyWebSocket(req: Request, target: URL): Response {
   upstream.onclose = (event) => {
     if (socket.readyState === WebSocket.OPEN) {
       // Use 1000 if the code is not allowed for manual close (spec restricted)
-      const code = event.code === 1000 || (event.code >= 3000 && event.code <= 4999)
-        ? event.code
-        : 1000;
+      const code =
+        event.code === 1000 || (event.code >= 3000 && event.code <= 4999)
+          ? event.code
+          : 1000;
       socket.close(code, event.reason);
     }
   };
 
   socket.onclose = (event) => {
     if (upstream.readyState === WebSocket.OPEN) {
-      const code = event.code === 1000 || (event.code >= 3000 && event.code <= 4999)
-        ? event.code
-        : 1000;
+      const code =
+        event.code === 1000 || (event.code >= 3000 && event.code <= 4999)
+          ? event.code
+          : 1000;
       upstream.close(code, event.reason);
     }
   };

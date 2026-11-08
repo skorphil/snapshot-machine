@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 import { assertEquals } from "@std/assert";
-import type { FileVersion } from "@btrbk-gui/shared/types.ts";
+import type { FileVersion } from "@snapshot-machine/shared/types.ts";
 import { formatDate, getDisplayDate, parseValidDate } from "./dates.ts";
 
 const T_BIRTH = "2026-10-31T17:13:44.651Z";

@@ -1,4 +1,4 @@
-import type { DesktopBindings } from "@btrbk-gui/shared/types.ts";
+import type { DesktopBindings } from "@snapshot-machine/shared/types.ts";
 
 declare global {
   var bindings: DesktopBindings;

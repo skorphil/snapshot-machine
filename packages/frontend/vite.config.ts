@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@btrbk-gui/shared/": fileURLToPath(
+      "@snapshot-machine/shared/": fileURLToPath(
         new URL("../shared/", import.meta.url),
       ),
       "@/": fileURLToPath(new URL("./src/", import.meta.url)),

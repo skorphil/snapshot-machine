@@ -1,4 +1,4 @@
-import type { FileVersion } from "@btrbk-gui/shared/types.ts";
+import type { FileVersion } from "@snapshot-machine/shared/types.ts";
 import type { DateMode } from "./types.ts";
 
 /**
