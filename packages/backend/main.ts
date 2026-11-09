@@ -1,8 +1,13 @@
 import type { DesktopBindings } from "@snapshot-machine/shared/types.ts";
 import { fileURLToPath } from "node:url";
 import { logger } from "@snapshot-machine/backend/shared/logger.ts";
+import { getHomeDirectory } from "@snapshot-machine/backend/shared/home-directory.ts";
 import { listFolderHistory } from "@snapshot-machine/backend/features/folder-history/index.ts";
 import { pickFolder } from "@snapshot-machine/backend/features/folder-picker/index.ts";
+import {
+  assertDependenciesAvailable,
+  checkDependencies,
+} from "@snapshot-machine/backend/features/dependency-check/index.ts";
 import {
   restoreFile,
   saveFile,
@@ -26,16 +31,34 @@ if (Deno.env.get("VITE_DEV_URL")) {
   win.openDevtools({ renderer: true });
 }
 
+const dependencyReport = await checkDependencies();
+if (!dependencyReport.ok) {
+  logger.warn(
+    "Missing dependencies, backup operations are disabled:",
+    dependencyReport.dependencies.filter((d) => !d.available),
+  );
+}
+
 const bindings = {
   pickFolder: async (title) => await pickFolder(title),
   saveFile: async (opts) => await saveFile(opts),
-  listFolderHistory: async (path) => await listFolderHistory(path),
-  restoreFile: async (src, dest) => await restoreFile(src, dest),
+  getDependencyStatus: () => checkDependencies(),
+  getHomeDirectory: () => Promise.resolve(getHomeDirectory()),
+  listFolderHistory: async (path) => {
+    await assertDependenciesAvailable();
+    return await listFolderHistory(path);
+  },
+  restoreFile: async (src, dest) => {
+    await assertDependenciesAvailable();
+    await restoreFile(src, dest);
+  },
   logFromWebview: (msg) => logger.info("[webview]", msg),
 } satisfies DesktopBindings;
 
 win.bind("pickFolder", bindings.pickFolder);
 win.bind("saveFile", bindings.saveFile);
+win.bind("getDependencyStatus", bindings.getDependencyStatus);
+win.bind("getHomeDirectory", bindings.getHomeDirectory);
 win.bind("listFolderHistory", bindings.listFolderHistory);
 win.bind("restoreFile", bindings.restoreFile);
 win.bind("logFromWebview", bindings.logFromWebview);

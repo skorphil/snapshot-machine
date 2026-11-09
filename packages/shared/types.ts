@@ -34,6 +34,29 @@ export type FileVersion = {
   size: number;
 };
 
+/** External binaries the application requires. */
+export type DependencyName = "btrbk" | "btrfs";
+
+/** Availability of a single external binary. */
+export interface DependencyStatus {
+  /** Binary name as invoked on PATH. */
+  name: DependencyName;
+  /** True when the binary exists and `--version` succeeded. */
+  available: boolean;
+  /** Version reported by the binary, or null if unavailable or unparsable. */
+  version: string | null;
+  /** Human-readable reason the binary is unavailable, or null. */
+  error: string | null;
+}
+
+/** Result of checking every required dependency. */
+export interface DependencyReport {
+  /** True when every required dependency is available. */
+  ok: boolean;
+  /** Per-dependency status, in check order. */
+  dependencies: DependencyStatus[];
+}
+
 /** Options accepted by the native save dialog. */
 export interface SaveFileOptions {
   /** Dialog title. Defaults to "Save file". */
@@ -55,10 +78,14 @@ export interface DesktopBindings {
   pickFolder(title?: string): Promise<string | null>;
   /** Opens the native save dialog. Resolves to the chosen path, or null if cancelled. */
   saveFile(opts?: SaveFileOptions): Promise<string | null>;
-  /** Scans the btrbk snapshot history of a folder. */
+  /** Reports whether the required btrbk and btrfs binaries are available. */
+  getDependencyStatus(): Promise<DependencyReport>;
+  /** Scans the btrbk snapshot history of a folder. Fails if dependencies are missing. */
   listFolderHistory(path: string): Promise<FileHistoryEntry[]>;
-  /** Copies a snapshot file to the destination path. */
+  /** Copies a snapshot file to the destination path. Fails if dependencies are missing. */
   restoreFile(src: string, dest: string): Promise<void>;
+  /** Returns the absolute home directory of the current user. */
+  getHomeDirectory(): Promise<string>;
   /** Forwards a diagnostic message from the webview to the backend log. */
   logFromWebview(msg: unknown): void;
 }

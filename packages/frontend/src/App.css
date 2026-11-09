@@ -1,7 +1,7 @@
 .app {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
   min-height: 100svh;
   box-sizing: border-box;
   padding: 2rem 1.5rem;
@@ -10,8 +10,39 @@
 .history-view {
   width: 100%;
   max-width: 1200px;
-  margin: 0;
+  margin: 0 auto;
   text-align: left;
+}
+
+.dependency-banner {
+  /* Pushes the banner to the bottom of .app when the content is shorter than the viewport. */
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--social-bg);
+  text-align: left;
+}
+
+.dependency-banner p {
+  margin-bottom: 0.5rem;
+}
+
+.dependency-banner ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.dependency-banner.info {
+  color: var(--text);
+}
+
+.dependency-banner.error {
+  color: #ff6b6b;
+  border-color: #ff6b6b;
 }
 
 .controls {

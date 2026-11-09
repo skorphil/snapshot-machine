@@ -12,6 +12,11 @@ export async function pickFolder(): Promise<string | null> {
   return selected ?? null;
 }
 
+/** Resolves the home directory of the current user from the backend. */
+export function getHomeDirectory(): Promise<string> {
+  return getBindings().getHomeDirectory();
+}
+
 /** Scans the btrbk snapshot history for the given folder. */
 export function listFolderHistory(path: string): Promise<FileHistoryEntry[]> {
   return getBindings().listFolderHistory(path);

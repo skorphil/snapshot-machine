@@ -12,4 +12,4 @@ case "$current_branch" in
     ;;
 esac
 
-deno task lint && deno task build
+deno task lint && deno task build:frontend

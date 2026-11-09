@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { DateMode } from "../model/types.ts";
 import { isDateMode } from "../model/types.ts";
 import { formatDate, getDisplayDate } from "../model/dates.ts";
@@ -6,7 +6,12 @@ import type {
   FileHistoryEntry,
   FileVersion,
 } from "@snapshot-machine/shared/types.ts";
-import { listFolderHistory, pickFolder, restoreFile } from "../api/index.ts";
+import {
+  getHomeDirectory,
+  listFolderHistory,
+  pickFolder,
+  restoreFile,
+} from "../api/index.ts";
 import { logger } from "@/shared/logger.ts";
 import { logFromWebview } from "@/shared/bindings.ts";
 
@@ -14,16 +19,37 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+type HistoryViewProps = {
+  /** False while required backup dependencies are missing or still being checked. */
+  backupsEnabled: boolean;
+};
+
 /**
  * Folder history explorer: lets the user pick a folder, scan its btrbk
  * snapshot history, and restore any version of a file.
  */
-export function HistoryView() {
-  const [path, setPath] = useState("/home/philipp/Documents");
+export function HistoryView({ backupsEnabled }: HistoryViewProps) {
+  const [path, setPath] = useState("");
   const [history, setHistory] = useState<FileHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dateMode, setDateMode] = useState<DateMode>("arrival");
+
+  useEffect(() => {
+    let cancelled = false;
+    getHomeDirectory()
+      .then((home) => {
+        if (!cancelled) {
+          setPath(home.replace(/\/+$/, "") + "/Documents");
+        }
+      })
+      .catch((e) => {
+        logger.error("getHomeDirectory failed:", e);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleBrowse = async () => {
     try {
@@ -81,7 +107,11 @@ export function HistoryView() {
         <button type="button" onClick={handleBrowse}>
           Browse...
         </button>
-        <button type="button" onClick={fetchHistory} disabled={loading}>
+        <button
+          type="button"
+          onClick={fetchHistory}
+          disabled={loading || !backupsEnabled}
+        >
           {loading ? "Loading..." : "Scan History"}
         </button>
         <select
@@ -126,6 +156,7 @@ export function HistoryView() {
                 <td>{entry.lastSeen}</td>
                 <td>
                   <select
+                    disabled={!backupsEnabled}
                     onChange={(e) => {
                       const ver = entry.versions.find((v) =>
                         v.snapshot === e.target.value
