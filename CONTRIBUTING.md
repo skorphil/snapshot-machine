@@ -1,12 +1,7 @@
 ## Quick start
 
 ```shell
-# Install dependencies
-deno install
-
-# Start dev server
-deno task dev
-
-# Start prod-alike server
-deno task serve
+deno install        # Install dependencies
+deno task setup     # Initialize husky hooks
+deno task dev       # Start dev server
 ```

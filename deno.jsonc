@@ -10,9 +10,14 @@
     "@std/path": "jsr:@std/path@1",
     "@snapshot-machine/shared/": "./packages/shared/",
     "@snapshot-machine/backend/": "./packages/backend/src/",
-    "dbus-next": "npm:dbus-next@0.10.2"
+    "dbus-next": "npm:dbus-next@0.10.2",
+    "husky": "npm:husky@^9.1.7"
   },
   "tasks": {
+    "build": {
+      "description": "Build all artifacts required for a release",
+      "command": "deno task build:frontend"
+    },
     "build:frontend": {
       "description": "Build the frontend bundle with Vite",
       "command": "deno task --cwd packages/frontend build"
@@ -33,6 +38,15 @@
     "lint": {
       "description": "Lint backend, shared, frontend, and script source files",
       "command": "deno lint packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src scripts/dev.ts"
+    },
+    "setup": {
+      "description": "Setup the development environment (e.g., git hooks)",
+      "command": "deno run -A npm:husky"
     }
+  },
+  "lint": {
+    "plugins": [
+      "./scripts/lint/fsd-plugin.ts"
+    ]
   }
 }

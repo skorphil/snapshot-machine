@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+# Block pushing local-only test branches
+current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+case "$current_branch" in
+  test/*)
+    echo "----------------------------------------------------"
+    echo "PUSH BLOCKED: '$current_branch' is a local-only test branch."
+    echo "To bypass this (if absolutely necessary), use --no-verify"
+    echo "----------------------------------------------------"
+    exit 1
+    ;;
+esac
+
+deno task lint && deno task build
