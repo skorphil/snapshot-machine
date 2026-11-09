@@ -14,10 +14,6 @@
     "husky": "npm:husky@^9.1.7"
   },
   "tasks": {
-    "build": {
-      "description": "Build all artifacts required for a release",
-      "command": "deno task build:frontend"
-    },
     "build:frontend": {
       "description": "Build the frontend bundle with Vite",
       "command": "deno task --cwd packages/frontend build"
@@ -41,11 +37,15 @@
     },
     "check": {
       "description": "Type-check backend, shared, and frontend source files",
-      "command": "deno check packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src dev-scripts/dev.ts dev-scripts/dev-fedora.ts"
+      "command": "deno check packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src dev-scripts/dev.ts dev-scripts/dev-fedora.ts dev-scripts/package.ts"
     },
     "lint": {
       "description": "Lint backend, shared, frontend, and script source files",
-      "command": "deno lint packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src dev-scripts/dev.ts dev-scripts/dev-fedora.ts"
+      "command": "deno lint packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src dev-scripts/dev.ts dev-scripts/dev-fedora.ts dev-scripts/package.ts"
+    },
+    "package": {
+      "description": "Build .deb and .rpm packages into dist/ (requires nfpm on PATH)",
+      "command": "deno run --allow-run --allow-env --allow-read --allow-write=dist dev-scripts/package.ts"
     },
     "setup": {
       "description": "Setup the development environment (e.g., git hooks)",

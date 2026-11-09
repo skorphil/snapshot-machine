@@ -2,6 +2,15 @@
   "name": "@snapshot-machine/backend",
   "version": "0.1.0",
   "exports": "./main.ts",
+  "desktop": {
+    "app": {
+      "name": "Snapshot Machine",
+      "identifier": "com.snapshot-machine.app",
+      "icons": {
+        "linux": "./assets/snapshot-machine.png"
+      }
+    }
+  },
   "tasks": {
     "start": "deno desktop -o dist --include ../frontend/dist --import-map ../../deno.jsonc --allow-net --allow-read --allow-run --allow-env --allow-sys --allow-write=/run/user main.ts",
     "dev": "deno desktop --hmr -o dist --include ../frontend/dist --import-map ../../deno.jsonc --allow-net --allow-read --allow-run --allow-env --allow-sys --allow-write=/run/user main.ts"

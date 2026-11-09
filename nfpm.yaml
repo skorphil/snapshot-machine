@@ -1,0 +1,64 @@
+name: "snapshot-machine"
+arch: "amd64"
+platform: "linux"
+version: "0.1.0"
+section: "utils"
+priority: "optional"
+maintainer: "Snapshot Machine Team"
+description: "Graphical user interface for btrbk backup tool"
+homepage: "https://github.com/skorphil/snapshot-machine"
+license: "MIT"
+
+depends:
+  - "btrbk"
+  - "btrfs-progs"
+
+overrides:
+  deb:
+    depends:
+      - "btrbk"
+      - "btrfs-progs"
+      - "libwebkit2gtk-4.1-0"
+      - "libgtk-3-0"
+  rpm:
+    depends:
+      - "btrbk"
+      - "btrfs-progs"
+      - "webkit2gtk4.1"
+      - "gtk3"
+
+scripts:
+  postinstall: "./packaging/scripts/postinstall.sh"
+  postremove: "./packaging/scripts/postremove.sh"
+
+contents:
+  # Deno Desktop launcher and the shared library holding the embedded app
+  - src: "./packages/backend/dist/dist"
+    dst: "/usr/lib/snapshot-machine/dist"
+    file_info:
+      mode: 0755
+  - src: "./packages/backend/dist/dist.so"
+    dst: "/usr/lib/snapshot-machine/dist.so"
+    file_info:
+      mode: 0755
+
+  # Launcher symlinks in PATH
+  - src: "/usr/lib/snapshot-machine/dist"
+    dst: "/usr/bin/snapshot-machine"
+    type: "symlink"
+
+  # Application menu entry
+  - src: "./packages/backend/assets/com.snapshot-machine.app.desktop"
+    dst: "/usr/share/applications/com.snapshot-machine.app.desktop"
+    file_info:
+      mode: 0644
+
+  # Application icons (hicolor theme)
+  - src: "./packages/backend/assets/com.snapshot-machine.app.svg"
+    dst: "/usr/share/icons/hicolor/scalable/apps/com.snapshot-machine.app.svg"
+    file_info:
+      mode: 0644
+  - src: "./packages/backend/assets/snapshot-machine.png"
+    dst: "/usr/share/icons/hicolor/512x512/apps/com.snapshot-machine.app.png"
+    file_info:
+      mode: 0644

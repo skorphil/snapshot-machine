@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Snapshot Machine
+Comment=Graphical user interface for btrbk backup tool
+Exec=snapshot-machine
+Icon=com.snapshot-machine.app
+Terminal=false
+Categories=Utility;Archiving;System;
+StartupWMClass=com.snapshot-machine.app
