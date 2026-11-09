@@ -1,3 +1,5 @@
+import { logger } from "@snapshot-machine/backend/shared/logger.ts";
+
 /**
  * Reads and parses a btrbk configuration file. Blank lines and `#` comments
  * are ignored; unrecognized keys are skipped.
@@ -6,7 +8,16 @@
  * @returns The parsed configuration.
  */
 export async function parseConfig(configPath: string): Promise<BtrbkConfig> {
-  const content = await Deno.readTextFile(configPath);
+  let content: string;
+  try {
+    content = await Deno.readTextFile(configPath);
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      logger.warn(`btrbk configuration not found: ${configPath}`);
+      return { volumes: [] };
+    }
+    throw error;
+  }
   const lines = content.split("\n");
   const config: BtrbkConfig = { volumes: [] };
   let currentVolume: VolumeConfig | null = null;

@@ -58,6 +58,9 @@ export async function listFolderHistory(
   }
 
   const config = await parseConfig("/etc/btrbk/btrbk.conf");
+  if (config.volumes.length === 0) {
+    return [];
+  }
 
   // 1. Find the volume
   let bestVolume: VolumeConfig | null = null;

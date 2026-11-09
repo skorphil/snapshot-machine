@@ -1,5 +1,4 @@
 import {
-  logger,
   showPortalFileDialog,
 } from "@snapshot-machine/backend/shared/xdg-portal/index.ts";
 
@@ -13,19 +12,11 @@ const PICKER_TITLE = "Select folder";
  * @returns The absolute path of the selected directory, or null if cancelled,
  * empty, or failed.
  */
-export function pickFolder(title?: string): Promise<string | null> {
-  return showPortalFileDialog({
+export async function pickFolder(title?: string): Promise<string | null> {
+  const selected = await showPortalFileDialog({
     method: "OpenFile",
     title: title || PICKER_TITLE,
     directory: true,
   });
-}
-
-// Test harness
-if (import.meta.main) {
-  logger.info("Testing pickFolder with dbus-next...");
-  const title = Deno.args[0] || "Test Title";
-  const result = await pickFolder(title);
-  logger.info("Result:", result);
-  Deno.exit(result ? 0 : 1);
+  return selected;
 }
