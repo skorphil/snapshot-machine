@@ -29,7 +29,7 @@
     },
     "test": {
       "description": "Run colocated unit tests (*_test.ts)",
-      "command": "deno test --allow-env packages/backend/src packages/frontend/src"
+      "command": "deno test --allow-env --allow-read --allow-write packages/backend/src packages/frontend/src"
     },
     "check": {
       "description": "Type-check backend, shared, and frontend source files",

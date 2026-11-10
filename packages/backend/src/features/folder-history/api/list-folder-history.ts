@@ -1,6 +1,9 @@
 import { isAbsolute, join, relative, SEPARATOR } from "@std/path";
 import type { FileHistoryEntry } from "@snapshot-machine/shared/types.ts";
-import { parseConfig, type VolumeConfig } from "../btrbk-config-parser.ts";
+import {
+  loadBtrbkConfig,
+  type VolumeConfig,
+} from "@snapshot-machine/backend/shared/btrbk-config/index.ts";
 import { logger } from "@snapshot-machine/backend/shared/logger.ts";
 
 const SNAPSHOT_TIMESTAMP =
@@ -57,7 +60,7 @@ export async function listFolderHistory(
     throw new Error(`Invalid folder path: ${targetPath}`);
   }
 
-  const config = await parseConfig("/etc/btrbk/btrbk.conf");
+  const config = await loadBtrbkConfig();
   if (config.volumes.length === 0) {
     return [];
   }

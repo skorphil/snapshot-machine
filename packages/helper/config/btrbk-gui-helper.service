@@ -1,0 +1,9 @@
+[Unit]
+Description=Snapshot Machine btrbk Root Helper
+Documentation=https://github.com/skorphil/snapshot-machine
+
+[Service]
+Type=dbus
+BusName=com.snapshot_machine.BtrbkService1
+ExecStart=/usr/libexec/btrbk-gui-helper
+Restart=on-failure

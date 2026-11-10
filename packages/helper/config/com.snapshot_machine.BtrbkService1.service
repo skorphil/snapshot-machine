@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=com.snapshot_machine.BtrbkService1
+Exec=/usr/libexec/btrbk-gui-helper
+User=root
+SystemdService=btrbk-gui-helper.service

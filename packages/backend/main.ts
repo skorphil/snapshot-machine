@@ -2,6 +2,10 @@ import type { DesktopBindings } from "@snapshot-machine/shared/types.ts";
 import { fileURLToPath } from "node:url";
 import { logger } from "@snapshot-machine/backend/shared/logger.ts";
 import { getHomeDirectory } from "@snapshot-machine/backend/shared/home-directory.ts";
+import {
+  getConfigName,
+  getConfigNamePath,
+} from "@snapshot-machine/backend/shared/btrbk-config/index.ts";
 import { listFolderHistory } from "@snapshot-machine/backend/features/folder-history/index.ts";
 import { pickFolder } from "@snapshot-machine/backend/features/folder-picker/index.ts";
 import {
@@ -12,6 +16,11 @@ import {
   restoreFile,
   saveFile,
 } from "@snapshot-machine/backend/features/restore/index.ts";
+import {
+  listConfigFiles,
+  readConfigFile,
+  saveConfigFile,
+} from "@snapshot-machine/backend/features/config-editor/index.ts";
 
 // `Deno.BrowserWindow` only exists when running inside `deno desktop` and is
 // not part of Deno's type definitions, so it is read reflectively.
@@ -53,6 +62,11 @@ const bindings = {
     await restoreFile(src, dest);
   },
   logFromWebview: (msg) => logger.info("[webview]", msg),
+  getConfigName: () => Promise.resolve(getConfigName()),
+  getConfigPath: () => Promise.resolve(getConfigNamePath()),
+  listConfigFiles: () => listConfigFiles(),
+  readConfigFile: (name) => readConfigFile(name),
+  saveConfigFile: (name, content) => saveConfigFile(name, content),
 } satisfies DesktopBindings;
 
 win.bind("pickFolder", bindings.pickFolder);
@@ -62,6 +76,11 @@ win.bind("getHomeDirectory", bindings.getHomeDirectory);
 win.bind("listFolderHistory", bindings.listFolderHistory);
 win.bind("restoreFile", bindings.restoreFile);
 win.bind("logFromWebview", bindings.logFromWebview);
+win.bind("getConfigName", bindings.getConfigName);
+win.bind("getConfigPath", bindings.getConfigPath);
+win.bind("listConfigFiles", bindings.listConfigFiles);
+win.bind("readConfigFile", bindings.readConfigFile);
+win.bind("saveConfigFile", bindings.saveConfigFile);
 
 win.addEventListener("close", () => {
   logger.info("Window close event received. Exiting...");

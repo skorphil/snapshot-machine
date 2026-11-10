@@ -52,6 +52,7 @@ for (
   const [cmd, args] of [
     ["deno", ["task", "build:frontend"]],
     ["deno", ["task", "--cwd", "packages/backend", "start"]],
+    ["deno", ["task", "--cwd", "packages/helper", "build"]],
   ] as const
 ) {
   const code = await run(cmd, [...args]);
