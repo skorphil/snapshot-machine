@@ -101,6 +101,37 @@ export interface DesktopBindings {
    * `ok: false` and an `error` message when btrbk rejects the content or access is denied.
    */
   saveConfigFile(name: string, content: string): Promise<SaveConfigResult>;
+  /**
+   * Starts `btrbk run` through the Root Helper after Polkit authorization. Resolves once the run
+   * has started; progress is read with `getBackupStatus`. Resolves with `ok: false` and an `error`
+   * message when access is denied or a run is already in progress.
+   */
+  runBackup(): Promise<RunBackupResult>;
+  /** Returns the state of the current or most recent backup run from the Root Helper. */
+  getBackupStatus(): Promise<BackupStatus>;
+}
+
+/** Lifecycle state of a backup run. */
+export type BackupState = "idle" | "running" | "success" | "failure";
+
+/** Status of the current or most recent backup run. */
+export interface BackupStatus {
+  /** Lifecycle state. */
+  state: BackupState;
+  /** Human-readable summary; for failures, the tail of btrbk's output. */
+  message: string;
+  /** ISO time the current or most recent run started, or null if none ran yet. */
+  startedAt: string | null;
+  /** ISO time the most recent run finished, or null while running or if none ran yet. */
+  finishedAt: string | null;
+}
+
+/** Outcome of asking the Root Helper to start a backup run. */
+export interface RunBackupResult {
+  /** True when the run was started. */
+  ok: boolean;
+  /** Reason the run was not started, e.g. a denied authorization. */
+  error?: string;
 }
 
 /** Outcome of saving a configuration file. */

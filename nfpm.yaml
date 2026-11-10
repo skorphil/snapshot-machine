@@ -32,6 +32,7 @@ overrides:
       - "polkit"
 
 scripts:
+  preremove: "./packaging/scripts/preremove.sh"
   postinstall: "./packaging/scripts/postinstall.sh"
   postremove: "./packaging/scripts/postremove.sh"
 

@@ -10,6 +10,8 @@ const GLOB_CHARACTERS = /[*?[]/;
 type ParseState = {
   config: BtrbkConfig;
   currentVolume: VolumeConfig | null;
+  /** `snapshot_dir` declared before the first volume; applies to later volumes. */
+  globalSnapshotDir?: string;
 };
 
 /**
@@ -77,10 +79,18 @@ async function parseContent(
     if (key === "include") {
       await includeTarget(value, filePath, state, ancestors);
     } else if (key === "volume") {
-      state.currentVolume = { path: value, subvolumes: [] };
+      state.currentVolume = {
+        path: value,
+        snapshotDir: state.globalSnapshotDir,
+        subvolumes: [],
+      };
       state.config.volumes.push(state.currentVolume);
-    } else if (key === "snapshot_dir" && state.currentVolume) {
-      state.currentVolume.snapshotDir = value;
+    } else if (key === "snapshot_dir") {
+      if (state.currentVolume) {
+        state.currentVolume.snapshotDir = value;
+      } else {
+        state.globalSnapshotDir = value;
+      }
     } else if (key === "subvolume" && state.currentVolume) {
       state.currentVolume.subvolumes.push({ path: value });
     } else if (

@@ -1,5 +1,5 @@
 /// <reference lib="deno.ns" />
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
 import { resolveConfigName } from "@snapshot-machine/shared/config-name.ts";
 import { getConfigName, getDropInDir } from "./paths.ts";
@@ -62,18 +62,19 @@ Deno.test("getConfigName and getDropInDir honour the environment", async () => {
   });
 });
 
-Deno.test("loadBtrbkConfig reads the drop-in and ignores btrbk.conf", async () => {
+Deno.test("loadBtrbkConfig reads the GUI drop-in and ignores btrbk.conf", async () => {
   await withTempDir(async (dir) => {
-    const main = join(dir, "btrbk.conf");
     const dropIn = join(dir, "gui.conf.d");
     await Deno.mkdir(dropIn);
-    await Deno.writeTextFile(main, "volume /main\n  snapshot_dir s\n");
+    await Deno.writeTextFile(
+      join(dir, "btrbk.conf"),
+      "volume /main\n  snapshot_dir s\n",
+    );
     await Deno.writeTextFile(
       join(dropIn, "snapshot-machine.conf"),
       "volume /drop\n  snapshot_dir s\n",
     );
     await withEnv({
-      BTRBK_CONFIG_FILE: main,
       BTRBK_CONFIG_DIR: dropIn,
       BTRBK_CONFIG_NAME: undefined,
     }, async () => {
@@ -83,21 +84,21 @@ Deno.test("loadBtrbkConfig reads the drop-in and ignores btrbk.conf", async () =
   });
 });
 
-Deno.test("loadBtrbkConfig returns an empty config without writing when the drop-in is missing", async () => {
+Deno.test("loadBtrbkConfig fails with the Config Editor hint when the drop-in is missing", async () => {
   await withTempDir(async (dir) => {
     const dropIn = join(dir, "gui.conf.d");
     const target = join(dropIn, "snapshot-machine.conf");
     await withEnv({
-      BTRBK_CONFIG_FILE: join(dir, "absent.conf"),
       BTRBK_CONFIG_DIR: dropIn,
       BTRBK_CONFIG_NAME: undefined,
     }, async () => {
-      const config = await loadBtrbkConfig();
-      assertEquals(config.volumes, []);
+      await assertRejects(
+        () => loadBtrbkConfig(),
+        Error,
+        `Configuration file not found: ${target}. Configure it in the Config Editor first.`,
+      );
       const exists = await Deno.stat(target).then(() => true, () => false);
       assertEquals(exists, false);
-      const dirExists = await Deno.stat(dropIn).then(() => true, () => false);
-      assertEquals(dirExists, false);
     });
   });
 });

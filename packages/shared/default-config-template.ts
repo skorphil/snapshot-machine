@@ -5,7 +5,7 @@
  */
 export const DEFAULT_CONFIG_TEMPLATE: string = [
   "# snapshot-machine configuration drop-in",
-  "# Options configured here override or extend /etc/btrbk.conf",
+  "# Standalone configuration managed by snapshot-machine; /etc/btrbk/btrbk.conf is not used.",
   "",
   "snapshot_preserve_min   latest",
   "snapshot_preserve       24h 7d 4w",

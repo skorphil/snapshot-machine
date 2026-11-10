@@ -1,9 +1,6 @@
 import { join } from "@std/path";
 import { resolveConfigName } from "@snapshot-machine/shared/config-name.ts";
 
-/** Built-in location of the main btrbk configuration file. */
-export const DEFAULT_BTRBK_CONFIG_FILE = "/etc/btrbk/btrbk.conf";
-
 /**
  * Directory of GUI-managed btrbk drop-in files. Must match `CONFIG_DIR` in
  * `packages/helper/src/config-files.ts`; the helper is a separate package and
@@ -16,15 +13,6 @@ export const DEFAULT_DROP_IN_DIR = "/etc/btrbk/gui.conf.d";
  * `DEV_CONFIG_DIR` in `packages/helper/src/config-files.ts`.
  */
 export const DEV_DROP_IN_DIR = "/tmp/snapshot-machine-dev/gui.conf.d";
-
-/**
- * Returns the btrbk configuration file to read. `BTRBK_CONFIG_FILE` overrides
- * the default when it is set to a non-empty value.
- */
-export function getDefaultBtrbkConfigPath(): string {
-  const override = Deno.env.get("BTRBK_CONFIG_FILE");
-  return override && override.length > 0 ? override : DEFAULT_BTRBK_CONFIG_FILE;
-}
 
 /**
  * Returns the drop-in file name the app manages. Read from `BTRBK_CONFIG_NAME`;
