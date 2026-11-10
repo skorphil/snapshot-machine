@@ -88,4 +88,25 @@ export interface DesktopBindings {
   getHomeDirectory(): Promise<string>;
   /** Forwards a diagnostic message from the webview to the backend log. */
   logFromWebview(msg: unknown): void;
+  /** Returns the drop-in file name the app manages (`BTRBK_CONFIG_NAME`, default `snapshot-machine.conf`). */
+  getConfigName(): Promise<string>;
+  /** Returns the full path of the managed drop-in file, e.g. /etc/btrbk/gui.conf.d/snapshot-machine.conf. */
+  getConfigPath(): Promise<string>;
+  /** Lists the btrbk configuration file names in /etc/btrbk/gui.conf.d via the Root Helper. */
+  listConfigFiles(): Promise<string[]>;
+  /** Reads a configuration file from /etc/btrbk/gui.conf.d via the Root Helper. */
+  readConfigFile(name: string): Promise<string>;
+  /**
+   * Validates and saves a configuration file through the Root Helper. Resolves with
+   * `ok: false` and an `error` message when btrbk rejects the content or access is denied.
+   */
+  saveConfigFile(name: string, content: string): Promise<SaveConfigResult>;
+}
+
+/** Outcome of saving a configuration file. */
+export interface SaveConfigResult {
+  /** True when the file was validated and written. */
+  ok: boolean;
+  /** Reason the save was rejected, e.g. "config is incorrect: ...". */
+  error?: string;
 }

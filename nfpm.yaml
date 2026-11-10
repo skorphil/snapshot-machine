@@ -20,12 +20,16 @@ overrides:
       - "btrfs-progs"
       - "libwebkit2gtk-4.1-0"
       - "libgtk-3-0"
+      - "dbus"
+      - "polkitd"
   rpm:
     depends:
       - "btrbk"
       - "btrfs-progs"
       - "webkit2gtk4.1"
       - "gtk3"
+      - "dbus"
+      - "polkit"
 
 scripts:
   postinstall: "./packaging/scripts/postinstall.sh"
@@ -41,6 +45,28 @@ contents:
     dst: "/usr/lib/snapshot-machine/dist.so"
     file_info:
       mode: 0755
+
+  # Root Helper: compiled D-Bus service, activation and policy files
+  - src: "./packages/helper/dist/btrbk-gui-helper"
+    dst: "/usr/libexec/btrbk-gui-helper"
+    file_info:
+      mode: 0755
+  - src: "./packages/helper/config/com.snapshot_machine.BtrbkService1.conf"
+    dst: "/usr/share/dbus-1/system.d/com.snapshot_machine.BtrbkService1.conf"
+    file_info:
+      mode: 0644
+  - src: "./packages/helper/config/com.snapshot_machine.BtrbkService1.service"
+    dst: "/usr/share/dbus-1/system-services/com.snapshot_machine.BtrbkService1.service"
+    file_info:
+      mode: 0644
+  - src: "./packages/helper/config/com.snapshot_machine.BtrbkService1.policy"
+    dst: "/usr/share/polkit-1/actions/com.snapshot_machine.BtrbkService1.policy"
+    file_info:
+      mode: 0644
+  - src: "./packages/helper/config/btrbk-gui-helper.service"
+    dst: "/usr/lib/systemd/system/btrbk-gui-helper.service"
+    file_info:
+      mode: 0644
 
   # Launcher symlinks in PATH
   - src: "/usr/lib/snapshot-machine/dist"

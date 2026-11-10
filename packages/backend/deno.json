@@ -12,7 +12,7 @@
     }
   },
   "tasks": {
-    "start": "deno desktop -o dist --include ../frontend/dist --import-map ../../deno.jsonc --allow-net --allow-read --allow-run --allow-env --allow-sys --allow-write=/run/user main.ts",
-    "dev": "deno desktop --hmr -o dist --include ../frontend/dist --import-map ../../deno.jsonc --allow-net --allow-read --allow-run --allow-env --allow-sys --allow-write=/run/user main.ts"
+    "start": "deno desktop -o dist --include ../frontend/dist --import-map ../../deno.jsonc --allow-net --allow-read --allow-run --allow-env --allow-sys --allow-write=/var/run/dbus/system_bus_socket,/run/dbus/system_bus_socket,/run/user main.ts",
+    "dev": "deno desktop --hmr -o dist --include ../frontend/dist --import-map ../../deno.jsonc --allow-net --allow-read --allow-run --allow-env --allow-sys --allow-write=/var/run/dbus/system_bus_socket,/run/dbus/system_bus_socket,/run/user main.ts"
   }
 }
