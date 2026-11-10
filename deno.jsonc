@@ -22,10 +22,6 @@
       "description": "Run Vite dev server and Deno Desktop with HMR",
       "command": "deno run --allow-run --allow-env dev-scripts/dev.ts"
     },
-    "dev:fedora": {
-      "description": "Run the app in the Distrobox Fedora container defined in dev-scripts/distrobox.ini (pass --no-deps to omit btrbk and btrfs-progs)",
-      "command": "deno run --allow-run=distrobox dev-scripts/dev-fedora.ts"
-    },
     "serve": {
       "description": "Build the frontend and run the packaged Deno Desktop application",
       "dependencies": ["build:frontend"],
@@ -37,11 +33,11 @@
     },
     "check": {
       "description": "Type-check backend, shared, and frontend source files",
-      "command": "deno check packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src dev-scripts/dev.ts dev-scripts/dev-fedora.ts dev-scripts/package.ts"
+      "command": "deno check packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src dev-scripts/dev.ts dev-scripts/package.ts"
     },
     "lint": {
       "description": "Lint backend, shared, frontend, and script source files",
-      "command": "deno lint packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src dev-scripts/dev.ts dev-scripts/dev-fedora.ts dev-scripts/package.ts"
+      "command": "deno lint packages/backend/main.ts packages/backend/src packages/shared/*.ts packages/frontend/src dev-scripts/dev.ts dev-scripts/package.ts"
     },
     "package": {
       "description": "Build .deb and .rpm packages into dist/ (requires nfpm on PATH)",
