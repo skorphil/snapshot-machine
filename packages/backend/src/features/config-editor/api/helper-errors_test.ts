@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 import { assertEquals, assertInstanceOf } from "@std/assert";
 import { DBusError } from "dbus-next";
-import { HelperUnavailableError, toHelperError } from "./helper-client.ts";
+import { HelperUnavailableError, toHelperError } from "./helper-errors.ts";
 
 function withCode(code: string): Error {
   const error = new Error(`connect ${code}`);
@@ -40,4 +40,12 @@ Deno.test("toHelperError maps NotCapable and unknown failures", () => {
     toHelperError(new Error("boom")).message,
     "Root Helper is not available: boom",
   );
+});
+
+Deno.test("toHelperError keeps a Busy rejection unchanged", () => {
+  const rejection = new DBusError(
+    "com.snapshot_machine.BtrbkService1.Error.Busy",
+    "A backup is already running",
+  );
+  assertEquals(toHelperError(rejection), rejection);
 });

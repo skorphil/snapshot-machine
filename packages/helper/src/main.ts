@@ -2,6 +2,7 @@
  * Root Helper for Snapshot Machine. Exposes the btrbk drop-in configuration files
  * under `com.snapshot_machine.BtrbkService1` on the system bus. Writes are authorized per
  * request through Polkit (`com.snapshot_machine.BtrbkService1.configure`).
+ * Manual backup runs are authorized with `com.snapshot_machine.BtrbkService1.run`.
  */
 
 import {
@@ -17,6 +18,7 @@ import {
   assertValidConfigFileName,
   assertValidContent,
   ConfigFileError,
+  configFilePath,
   ConfigSyntaxError,
   ensureConfigDir,
   listConfigFiles,
@@ -25,12 +27,18 @@ import {
   validateWithBtrbk,
   writeConfigFileAtomic,
 } from "./config-files.ts";
+import {
+  assertConfigFileExists,
+  BackupBusyError,
+  BackupRunner,
+} from "./backup-run.ts";
 
 const { Interface } = dbusInterface;
 
 const SERVICE_NAME = "com.snapshot_machine.BtrbkService1";
 const OBJECT_PATH = "/com/snapshot_machine/BtrbkService1";
 const POLKIT_CONFIGURE_ACTION = "com.snapshot_machine.BtrbkService1.configure";
+const POLKIT_RUN_ACTION = "com.snapshot_machine.BtrbkService1.run";
 const POLKIT_BUS = "org.freedesktop.PolicyKit1";
 const POLKIT_PATH = "/org/freedesktop/PolicyKit1/Authority";
 const POLKIT_AUTHORITY = "org.freedesktop.PolicyKit1.Authority";
@@ -43,6 +51,7 @@ const METHOD_CALL = 1;
 const ERR = {
   INVALID_ARGS: "com.snapshot_machine.BtrbkService1.Error.InvalidArgument",
   NOT_AUTHORIZED: "com.snapshot_machine.BtrbkService1.Error.NotAuthorized",
+  BUSY: "com.snapshot_machine.BtrbkService1.Error.Busy",
   FAILED: "com.snapshot_machine.BtrbkService1.Error.Failed",
   INTERNAL: "com.snapshot_machine.BtrbkService1.Error.Internal",
 } as const;
@@ -94,13 +103,22 @@ async function isAuthorized(
 class HelperInterface extends Interface {
   private readonly bus: MessageBus;
   private readonly configDir: string;
+  private readonly configFile: string;
+  private readonly backups: BackupRunner;
   /** Unique bus name of the caller of the method call being dispatched. */
   currentSender: string | null = null;
 
-  constructor(bus: MessageBus, configDir: string) {
+  constructor(
+    bus: MessageBus,
+    configDir: string,
+    configFile: string,
+    backups: BackupRunner,
+  ) {
     super(SERVICE_NAME);
     this.bus = bus;
     this.configDir = configDir;
+    this.configFile = configFile;
+    this.backups = backups;
   }
 
   /** Lists configuration file names in the drop-in directory. */
@@ -152,6 +170,48 @@ class HelperInterface extends Interface {
       throw toDBusError(error);
     }
   }
+
+  /**
+   * Starts `btrbk run` in the background after Polkit authorization and
+   * returns without waiting for it to finish. Progress is read with
+   * `GetBackupStatus`. A run already in progress is rejected before any
+   * authorization prompt is shown.
+   */
+  async RunBackup(): Promise<void> {
+    // Captured synchronously, before the first await.
+    const sender = this.currentSender;
+    if (!sender) {
+      throw new DBusError(ERR.INTERNAL, "Could not identify sender");
+    }
+
+    if (this.backups.getStatus().state === "running") {
+      throw new DBusError(ERR.BUSY, "A backup is already running");
+    }
+
+    try {
+      await assertConfigFileExists(this.configFile);
+    } catch (error) {
+      throw toDBusError(error);
+    }
+
+    if (!await isAuthorized(this.bus, sender, POLKIT_RUN_ACTION)) {
+      throw new DBusError(ERR.NOT_AUTHORIZED, "Not authorized by Polkit");
+    }
+
+    try {
+      this.backups.start();
+    } catch (error) {
+      if (error instanceof BackupBusyError) {
+        throw new DBusError(ERR.BUSY, error.message);
+      }
+      throw toDBusError(error);
+    }
+  }
+
+  /** Returns the status of the current or most recent backup run as JSON. */
+  GetBackupStatus(): Promise<string> {
+    return Promise.resolve(JSON.stringify(this.backups.getStatus()));
+  }
 }
 
 HelperInterface.configureMembers({
@@ -159,6 +219,8 @@ HelperInterface.configureMembers({
     ListConfigFiles: { inSignature: "", outSignature: "as" },
     ReadConfigFile: { inSignature: "s", outSignature: "s" },
     SaveConfigFile: { inSignature: "ss", outSignature: "" },
+    RunBackup: { inSignature: "", outSignature: "" },
+    GetBackupStatus: { inSignature: "", outSignature: "s" },
   },
 });
 
@@ -183,7 +245,12 @@ async function main(): Promise<void> {
     console.log(`[Helper] Session bus mode, config directory: ${configDir}`);
   }
 
-  const iface = new HelperInterface(bus, configDir);
+  const configFile = configFilePath(
+    configDir,
+    Deno.env.get("BTRBK_CONFIG_NAME") || "snapshot-machine.conf",
+  );
+  const backups = new BackupRunner({ configFile });
+  const iface = new HelperInterface(bus, configDir, configFile, backups);
 
   // Runs before dispatch. Records the caller of each method call; the
   // handler reads it synchronously at the start of the call.

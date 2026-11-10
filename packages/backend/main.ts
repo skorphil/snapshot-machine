@@ -17,8 +17,10 @@ import {
   saveFile,
 } from "@snapshot-machine/backend/features/restore/index.ts";
 import {
+  getBackupStatus,
   listConfigFiles,
   readConfigFile,
+  runBackup,
   saveConfigFile,
 } from "@snapshot-machine/backend/features/config-editor/index.ts";
 
@@ -67,6 +69,8 @@ const bindings = {
   listConfigFiles: () => listConfigFiles(),
   readConfigFile: (name) => readConfigFile(name),
   saveConfigFile: (name, content) => saveConfigFile(name, content),
+  runBackup: () => runBackup(),
+  getBackupStatus: () => getBackupStatus(),
 } satisfies DesktopBindings;
 
 win.bind("pickFolder", bindings.pickFolder);
@@ -81,6 +85,8 @@ win.bind("getConfigPath", bindings.getConfigPath);
 win.bind("listConfigFiles", bindings.listConfigFiles);
 win.bind("readConfigFile", bindings.readConfigFile);
 win.bind("saveConfigFile", bindings.saveConfigFile);
+win.bind("runBackup", bindings.runBackup);
+win.bind("getBackupStatus", bindings.getBackupStatus);
 
 win.addEventListener("close", () => {
   logger.info("Window close event received. Exiting...");

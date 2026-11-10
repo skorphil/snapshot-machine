@@ -6,6 +6,20 @@ import {
 } from "@snapshot-machine/backend/shared/btrbk-config/index.ts";
 import { logger } from "@snapshot-machine/backend/shared/logger.ts";
 
+/**
+ * Returns true when `error` means the path is absent or not a directory, i.e.
+ * a snapshot that simply does not contain the folder.
+ */
+function isAbsentPath(error: unknown): boolean {
+  return error instanceof Deno.errors.NotFound ||
+    error instanceof Deno.errors.NotADirectory;
+}
+
+/** Returns the message of an unknown thrown value. */
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 const SNAPSHOT_TIMESTAMP =
   /\.(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(?:_\d+)?$/;
 
@@ -101,8 +115,14 @@ export async function listFolderHistory(
         snapshots.push(entry.name);
       }
     }
-  } catch (e) {
-    logger.error(`Failed to read snapshot directory ${snapshotDir}:`, e);
+  } catch (error) {
+    if (isAbsentPath(error)) {
+      logger.warn(`Snapshot directory does not exist yet: ${snapshotDir}`);
+    } else {
+      logger.warn(
+        `Cannot read snapshot directory ${snapshotDir}: ${errorMessage(error)}`,
+      );
+    }
     return [];
   }
 
@@ -125,8 +145,13 @@ export async function listFolderHistory(
       for await (const entry of Deno.readDir(snapPath)) {
         dirEntries.push(entry);
       }
-    } catch {
-      // Snapshot does not contain this folder
+    } catch (error) {
+      if (!isAbsentPath(error)) {
+        logger.warn(
+          `Cannot read snapshot folder ${snapPath}: ${errorMessage(error)}`,
+        );
+      }
+      // The snapshot does not contain this folder
       continue;
     }
 
@@ -135,7 +160,12 @@ export async function listFolderHistory(
       let stat: Deno.FileInfo;
       try {
         stat = await Deno.lstat(fullPath);
-      } catch {
+      } catch (error) {
+        if (!isAbsentPath(error)) {
+          logger.warn(
+            `Cannot inspect snapshot entry ${fullPath}: ${errorMessage(error)}`,
+          );
+        }
         continue;
       }
 

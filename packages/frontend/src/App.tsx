@@ -2,6 +2,7 @@ import { useState } from "react";
 import "./App.css";
 import { HistoryView } from "@/features/folder-history/index.ts";
 import { ConfigEditor } from "@/features/config-editor/index.ts";
+import { BackupRunControl } from "@/features/backup-run/index.ts";
 import {
   DependencyBanner,
   useDependencyStatus,
@@ -40,7 +41,16 @@ function App() {
 
       {view === "history"
         ? <HistoryView backupsEnabled={backupsEnabled} />
-        : <ConfigEditor />}
+        : (
+          <ConfigEditor
+            renderExtraControls={({ hasUnsavedChanges }) => (
+              <BackupRunControl
+                available={backupsEnabled}
+                hasUnsavedChanges={hasUnsavedChanges}
+              />
+            )}
+          />
+        )}
       <DependencyBanner state={dependencies} />
     </main>
   );

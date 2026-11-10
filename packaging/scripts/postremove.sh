@@ -13,6 +13,7 @@ fi
 # Forget the removed Root Helper unit and bus files. The user's drop-in
 # configuration under /etc/btrbk/gui.conf.d is intentionally left in place.
 if command -v systemctl >/dev/null 2>&1; then
+  systemctl stop btrbk-gui-helper.service 2>/dev/null || true
   systemctl daemon-reload || true
 fi
 

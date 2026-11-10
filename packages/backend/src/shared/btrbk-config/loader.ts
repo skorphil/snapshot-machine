@@ -1,26 +1,19 @@
-import { DEFAULT_CONFIG_TEMPLATE } from "@snapshot-machine/shared/default-config-template.ts";
-import { type BtrbkConfig, parseConfig, parseConfigText } from "./parser.ts";
+import { type BtrbkConfig, parseConfig } from "./parser.ts";
 import { getConfigNamePath } from "./paths.ts";
 
 /**
- * Loads the btrbk configuration used for history lookups from the managed
- * drop-in `<drop-in dir>/<config name>`. The main `/etc/btrbk/btrbk.conf` is
- * not read.
+ * Loads the GUI-managed btrbk configuration `<drop-in dir>/<config name>`.
+ * The main `/etc/btrbk/btrbk.conf` is never read.
  *
- * This function is read-only. When the drop-in does not exist, the default
- * template is parsed from memory and nothing is written to disk. Creating
- * the drop-in belongs to the configuration editor flow.
+ * @throws {Error} If the managed configuration file does not exist.
  */
 export async function loadBtrbkConfig(): Promise<BtrbkConfig> {
-  const dropInPath = getConfigNamePath();
-  if (await isFile(dropInPath)) {
-    return await parseConfig(dropInPath);
-  }
-  return await parseConfigText(DEFAULT_CONFIG_TEMPLATE, dropInPath);
-}
-
-/** True when `path` exists and is a regular file. */
-async function isFile(path: string): Promise<boolean> {
+  const path = getConfigNamePath();
   const info = await Deno.stat(path).catch(() => null);
-  return info?.isFile ?? false;
+  if (!info?.isFile) {
+    throw new Error(
+      `Configuration file not found: ${path}. Configure it in the Config Editor first.`,
+    );
+  }
+  return await parseConfig(path);
 }

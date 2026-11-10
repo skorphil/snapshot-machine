@@ -3,4 +3,4 @@
  *
  * @module
  */
-export { ConfigEditor } from "./ui/ConfigEditor.tsx";
+export { ConfigEditor, type ConfigEditorProps } from "./ui/ConfigEditor.tsx";

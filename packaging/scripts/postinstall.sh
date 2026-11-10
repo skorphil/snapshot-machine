@@ -15,6 +15,11 @@ fi
 # activated on demand by the bus, so a failed reload must not fail the install.
 if command -v systemctl >/dev/null 2>&1; then
   systemctl daemon-reload || true
+  # If the helper service was already active (e.g. during upgrade or reinstallation),
+  # restart or stop it so D-Bus / systemd re-launches the newly installed binary.
+  if systemctl is-active --quiet btrbk-gui-helper.service 2>/dev/null; then
+    systemctl restart btrbk-gui-helper.service 2>/dev/null || true
+  fi
 fi
 
 if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet dbus.service 2>/dev/null; then

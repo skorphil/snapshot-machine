@@ -4,12 +4,23 @@ import { useConfigEditor } from "../model/use-config-editor.ts";
 /** Spaces inserted for one Tab press, so the textarea keeps indentation predictable. */
 const TAB = "  ";
 
+/** Props of the raw configuration editor. */
+export type ConfigEditorProps = {
+  /**
+   * Optional controls rendered next to the save actions, e.g. a backup trigger.
+   * Receives whether the editor has unsaved changes.
+   */
+  renderExtraControls?: (
+    state: { hasUnsavedChanges: boolean },
+  ) => React.ReactNode;
+};
+
 /**
  * Raw editor for the pre-configured btrbk drop-in file in /etc/btrbk/gui.conf.d.
  * Saves go through the Root Helper, which validates the content with btrbk and
  * requires Polkit authorization before writing.
  */
-export function ConfigEditor() {
+export function ConfigEditor({ renderExtraControls }: ConfigEditorProps) {
   const editor = useConfigEditor();
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -56,6 +67,8 @@ export function ConfigEditor() {
           </button>
         </div>
       </div>
+
+      {renderExtraControls?.({ hasUnsavedChanges: editor.dirty })}
 
       {editor.error && (
         <p className="error config-editor-error" role="alert">

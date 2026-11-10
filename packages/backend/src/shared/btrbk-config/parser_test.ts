@@ -1,10 +1,6 @@
 /// <reference lib="deno.ns" />
 import { assertEquals, assertRejects } from "@std/assert";
 import { join } from "@std/path";
-import {
-  DEFAULT_BTRBK_CONFIG_FILE,
-  getDefaultBtrbkConfigPath,
-} from "./paths.ts";
 import { MAX_INCLUDE_DEPTH, parseConfig } from "./parser.ts";
 
 async function withTempDir(fn: (dir: string) => Promise<void>): Promise<void> {
@@ -13,22 +9,6 @@ async function withTempDir(fn: (dir: string) => Promise<void>): Promise<void> {
     await fn(dir);
   } finally {
     await Deno.remove(dir, { recursive: true }).catch(() => undefined);
-  }
-}
-
-async function withEnv(
-  name: string,
-  value: string | undefined,
-  fn: () => void | Promise<void>,
-): Promise<void> {
-  const previous = Deno.env.get(name);
-  if (value === undefined) Deno.env.delete(name);
-  else Deno.env.set(name, value);
-  try {
-    await fn();
-  } finally {
-    if (previous === undefined) Deno.env.delete(name);
-    else Deno.env.set(name, previous);
   }
 }
 
@@ -43,22 +23,6 @@ volume /data
 volume /mnt/backup
   snapshot_dir /srv/snaps
 `;
-
-Deno.test("getDefaultBtrbkConfigPath returns the built-in path without an override", async () => {
-  await withEnv("BTRBK_CONFIG_FILE", undefined, () => {
-    assertEquals(getDefaultBtrbkConfigPath(), DEFAULT_BTRBK_CONFIG_FILE);
-    assertEquals(DEFAULT_BTRBK_CONFIG_FILE, "/etc/btrbk/btrbk.conf");
-  });
-});
-
-Deno.test("getDefaultBtrbkConfigPath honours BTRBK_CONFIG_FILE and ignores empty values", async () => {
-  await withEnv("BTRBK_CONFIG_FILE", "/tmp/custom-btrbk.conf", () => {
-    assertEquals(getDefaultBtrbkConfigPath(), "/tmp/custom-btrbk.conf");
-  });
-  await withEnv("BTRBK_CONFIG_FILE", "", () => {
-    assertEquals(getDefaultBtrbkConfigPath(), DEFAULT_BTRBK_CONFIG_FILE);
-  });
-});
 
 Deno.test("parseConfig reads volumes, subvolumes and snapshot_dir", async () => {
   await withTempDir(async (dir) => {
@@ -85,21 +49,33 @@ Deno.test("parseConfig reads volumes, subvolumes and snapshot_dir", async () => 
   });
 });
 
+Deno.test("parseConfig applies a global snapshot_dir to volumes without their own", async () => {
+  await withTempDir(async (dir) => {
+    const file = join(dir, "btrbk.conf");
+    await Deno.writeTextFile(
+      file,
+      [
+        "snapshot_dir /var/snaps",
+        "volume /home",
+        "volume /data",
+        "  snapshot_dir .snap",
+        "",
+      ].join("\n"),
+    );
+
+    const config = await parseConfig(file);
+
+    assertEquals(config.volumes.map((v) => v.snapshotDir), [
+      "/var/snaps",
+      ".snap",
+    ]);
+  });
+});
+
 Deno.test("parseConfig returns no volumes for a missing file", async () => {
   await withTempDir(async (dir) => {
     const config = await parseConfig(join(dir, "absent.conf"));
     assertEquals(config, { volumes: [] });
-  });
-});
-
-Deno.test("parseConfig follows the BTRBK_CONFIG_FILE override", async () => {
-  await withTempDir(async (dir) => {
-    const file = join(dir, "override.conf");
-    await Deno.writeTextFile(file, "volume /override\n  snapshot_dir snaps\n");
-    await withEnv("BTRBK_CONFIG_FILE", file, async () => {
-      const config = await parseConfig(getDefaultBtrbkConfigPath());
-      assertEquals(config.volumes.map((v) => v.path), ["/override"]);
-    });
   });
 });
 
