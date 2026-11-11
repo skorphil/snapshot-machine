@@ -107,6 +107,8 @@ export interface DesktopBindings {
    * message when access is denied or a run is already in progress.
    */
   runBackup(): Promise<RunBackupResult>;
+  /** Lists the mounted btrfs filesystems with their subvolume trees via the Root Helper. */
+  listBtrfsVolumes(): Promise<BtrfsVolume[]>;
   /** Returns the state of the current or most recent backup run from the Root Helper. */
   getBackupStatus(): Promise<BackupStatus>;
   /** Returns the configured backup interval and whether the systemd timer is enabled. */
@@ -190,4 +192,32 @@ export interface SaveConfigResult {
   ok: boolean;
   /** Reason the save was rejected, e.g. "config is incorrect: ...". */
   error?: string;
+}
+
+/**
+ * One subvolume of a btrfs filesystem, with the subvolumes nested below it.
+ */
+export interface BtrfsSubvolume {
+  /** Subvolume id within the filesystem. */
+  id: number;
+  /** Id of the parent subvolume, or 5 for the top-level tree. */
+  parentId: number;
+  /** Path relative to the top-level tree, e.g. `home/alice`. */
+  path: string;
+  /** Mount points at which this subvolume is mounted; empty when it is not mounted. */
+  mountPoints: string[];
+  /** Subvolumes whose parent is this one, sorted by path. */
+  children: BtrfsSubvolume[];
+}
+
+/** A mounted btrfs filesystem and the subvolume tree it contains. */
+export interface BtrfsVolume {
+  /** Source device of the filesystem, e.g. `/dev/sda2`. */
+  device: string;
+  /** Every mount point of the filesystem. */
+  mountPoints: string[];
+  /** Top-level subvolumes of the filesystem; empty when listing failed. */
+  subvolumes: BtrfsSubvolume[];
+  /** Reason the subvolumes could not be listed, or null when they were. */
+  error: string | null;
 }

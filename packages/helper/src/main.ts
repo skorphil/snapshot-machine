@@ -34,6 +34,7 @@ import {
   BackupBusyError,
   BackupRunner,
 } from "./backup-run.ts";
+import { listBtrfsVolumes } from "./btrfs.ts";
 import {
   createDevController,
   createSystemctlController,
@@ -233,6 +234,19 @@ class HelperInterface extends Interface {
     }
   }
 
+  /**
+   * Returns the mounted btrfs filesystems and their subvolume trees as JSON.
+   * Listing needs privileges, so failures are reported per volume instead of
+   * failing the whole call.
+   */
+  async ListBtrfsVolumes(): Promise<string> {
+    try {
+      return JSON.stringify(await listBtrfsVolumes());
+    } catch (error) {
+      throw toDBusError(error);
+    }
+  }
+
   /** Returns the status of the current or most recent backup run as JSON. */
   GetBackupStatus(): Promise<string> {
     return Promise.resolve(JSON.stringify(this.backups.getStatus()));
@@ -342,6 +356,7 @@ HelperInterface.configureMembers({
     GetSchedule: { inSignature: "", outSignature: "sub" },
     SetSchedule: { inSignature: "sub", outSignature: "" },
     GetScheduleStatus: { inSignature: "", outSignature: "sss" },
+    ListBtrfsVolumes: { inSignature: "", outSignature: "s" },
   },
 });
 

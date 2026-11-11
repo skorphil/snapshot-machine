@@ -4,6 +4,7 @@ import { HistoryView } from "@/features/folder-history/index.ts";
 import { ConfigEditor } from "@/features/config-editor/index.ts";
 import { BackupRunControl } from "@/features/backup-run/index.ts";
 import { BackupScheduleControl } from "@/features/backup-schedule/index.ts";
+import { BtrfsTree } from "@/features/btrfs-tree/index.ts";
 import {
   DependencyBanner,
   useDependencyStatus,
@@ -43,6 +44,7 @@ function App() {
       {view === "history" ? <HistoryView backupsEnabled={backupsEnabled} /> : (
         <>
           <BackupScheduleControl />
+          <BtrfsTree />
           <ConfigEditor
             renderExtraControls={({ hasUnsavedChanges }) => (
               <BackupRunControl
