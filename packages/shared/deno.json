@@ -5,6 +5,7 @@
     "./config-name.ts": "./config-name.ts",
     "./default-config-template.ts": "./default-config-template.ts",
     "./logger.ts": "./logger.ts",
+    "./schedule-limits.ts": "./schedule-limits.ts",
     "./types.ts": "./types.ts"
   }
 }
