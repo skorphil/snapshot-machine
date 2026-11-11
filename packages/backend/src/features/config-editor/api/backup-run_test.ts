@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 import { assertEquals, assertThrows } from "@std/assert";
-import { HelperUnavailableError } from "./helper-errors.ts";
+import { HelperUnavailableError } from "@snapshot-machine/backend/shared/helper/index.ts";
 import { parseBackupStatus } from "./backup-run.ts";
 
 Deno.test("parseBackupStatus accepts a well-formed status document", () => {

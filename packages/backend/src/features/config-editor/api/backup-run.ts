@@ -3,8 +3,11 @@ import type {
   BackupStatus,
   RunBackupResult,
 } from "@snapshot-machine/shared/types.ts";
-import { withHelper } from "./helper-connection.ts";
-import { HelperUnavailableError, isHelperRejection } from "./helper-errors.ts";
+import { withHelper } from "@snapshot-machine/backend/shared/helper/index.ts";
+import {
+  HelperUnavailableError,
+  isHelperRejection,
+} from "@snapshot-machine/backend/shared/helper/index.ts";
 
 /**
  * Asks the Root Helper to start a backup run. The helper returns once the run has

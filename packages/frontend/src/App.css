@@ -242,3 +242,130 @@
   font-size: 0.8rem;
   white-space: pre-wrap;
 }
+
+.backup-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--social-bg);
+}
+
+.backup-schedule-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.backup-schedule-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.backup-schedule-applied {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.backup-schedule-interval {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1.25rem;
+}
+
+.backup-schedule-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.backup-schedule-fields legend {
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  padding: 0;
+}
+
+.backup-schedule-count {
+  width: 5rem;
+}
+
+.backup-schedule-summary {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.backup-schedule-summary-invalid {
+  color: #b91c1c;
+}
+
+.backup-schedule-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.backup-schedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.backup-schedule-hint {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.backup-schedule-error {
+  margin: 0;
+}
+
+.backup-schedule-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.backup-schedule-status dt {
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.backup-schedule-status dd {
+  margin: 0;
+}
+
+.backup-schedule-badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.4rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--accent-bg);
+}
+
+.backup-schedule-badge-success {
+  color: #15803d;
+}
+
+.backup-schedule-badge-failure {
+  color: #b91c1c;
+}
+
+.backup-schedule-badge-running {
+  color: var(--accent);
+}

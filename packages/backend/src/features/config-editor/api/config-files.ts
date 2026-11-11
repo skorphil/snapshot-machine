@@ -1,6 +1,6 @@
 import type { SaveConfigResult } from "@snapshot-machine/shared/types.ts";
-import { withHelper } from "./helper-connection.ts";
-import { isHelperRejection } from "./helper-errors.ts";
+import { withHelper } from "@snapshot-machine/backend/shared/helper/index.ts";
+import { isHelperRejection } from "@snapshot-machine/backend/shared/helper/index.ts";
 
 /** Returns the names of the configuration files managed by the Root Helper. */
 export function listConfigFiles(): Promise<string[]> {

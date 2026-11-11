@@ -109,6 +109,56 @@ export interface DesktopBindings {
   runBackup(): Promise<RunBackupResult>;
   /** Returns the state of the current or most recent backup run from the Root Helper. */
   getBackupStatus(): Promise<BackupStatus>;
+  /** Returns the configured backup interval and whether the systemd timer is enabled. */
+  getSchedule(): Promise<BackupSchedule>;
+  /**
+   * Applies the backup schedule through the Root Helper, which writes the systemd units and
+   * asks for Polkit authorization. `interval` is `null` to remove the schedule. Resolves with
+   * `ok: false` and an `error` message when the request is rejected.
+   */
+  setSchedule(
+    interval: ScheduleInterval | null,
+    enabled: boolean,
+  ): Promise<SetScheduleResult>;
+  /** Returns the last run time, next run time and result of the scheduled backup. */
+  getScheduleStatus(): Promise<ScheduleStatus>;
+}
+
+/** Unit of a backup interval. */
+export type ScheduleUnit = "minutes" | "hours" | "days";
+
+/** A repeating backup interval, for example every 2 hours. */
+export interface ScheduleInterval {
+  /** Whole number of units between two runs; accepted counts are listed in `SCHEDULE_COUNTS`. */
+  count: number;
+  /** Unit of `count`. */
+  unit: ScheduleUnit;
+}
+
+/** Configured backup schedule. */
+export interface BackupSchedule {
+  /** Repeat interval; `null` when no timer is installed. */
+  interval: ScheduleInterval | null;
+  /** True when the systemd timer is enabled. */
+  enabled: boolean;
+}
+
+/** Last and next run of the scheduled backup. */
+export interface ScheduleStatus {
+  /** Time of the last trigger as reported by systemd, or an empty string if it never ran. */
+  lastRunTime: string;
+  /** Time of the next scheduled run as reported by systemd, or an empty string if none is set. */
+  nextRunTime: string;
+  /** Result of the last scheduled run. */
+  lastRunResult: "never" | "running" | "success" | "failure";
+}
+
+/** Outcome of changing the backup schedule. */
+export interface SetScheduleResult {
+  /** True when the schedule was applied. */
+  ok: boolean;
+  /** Reason the schedule was not applied, e.g. a denied authorization. */
+  error?: string;
 }
 
 /** Lifecycle state of a backup run. */

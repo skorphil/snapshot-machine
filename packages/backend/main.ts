@@ -17,6 +17,11 @@ import {
   saveFile,
 } from "@snapshot-machine/backend/features/restore/index.ts";
 import {
+  getSchedule,
+  getScheduleStatus,
+  setSchedule,
+} from "@snapshot-machine/backend/features/backup-schedule/index.ts";
+import {
   getBackupStatus,
   listConfigFiles,
   readConfigFile,
@@ -71,6 +76,9 @@ const bindings = {
   saveConfigFile: (name, content) => saveConfigFile(name, content),
   runBackup: () => runBackup(),
   getBackupStatus: () => getBackupStatus(),
+  getSchedule: () => getSchedule(),
+  setSchedule: (interval, enabled) => setSchedule(interval, enabled),
+  getScheduleStatus: () => getScheduleStatus(),
 } satisfies DesktopBindings;
 
 win.bind("pickFolder", bindings.pickFolder);
@@ -87,6 +95,9 @@ win.bind("readConfigFile", bindings.readConfigFile);
 win.bind("saveConfigFile", bindings.saveConfigFile);
 win.bind("runBackup", bindings.runBackup);
 win.bind("getBackupStatus", bindings.getBackupStatus);
+win.bind("getSchedule", bindings.getSchedule);
+win.bind("setSchedule", bindings.setSchedule);
+win.bind("getScheduleStatus", bindings.getScheduleStatus);
 
 win.addEventListener("close", () => {
   logger.info("Window close event received. Exiting...");
