@@ -1,5 +1,5 @@
-import { useState } from "react";
 import "./App.css";
+import { useViewRoute } from "@/shared/view-route/index.ts";
 import { HistoryView } from "@/features/folder-history/index.ts";
 import { ConfigEditor } from "@/features/config-editor/index.ts";
 import { BackupRunControl } from "@/features/backup-run/index.ts";
@@ -11,15 +11,12 @@ import {
   useDependencyStatus,
 } from "@/features/dependency-status/index.ts";
 
-/** Top-level views switchable from the tab bar. */
-type View = "history" | "sizes" | "config";
-
 /** Root application component; reports dependency status and switches between the history and config editor views. */
 function App() {
   const dependencies = useDependencyStatus();
   const backupsEnabled = dependencies.status === "ready" &&
     dependencies.report.ok;
-  const [view, setView] = useState<View>("history");
+  const [view, setView] = useViewRoute();
 
   return (
     <main className="app">
