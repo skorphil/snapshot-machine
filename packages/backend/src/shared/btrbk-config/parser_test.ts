@@ -39,11 +39,13 @@ Deno.test("parseConfig reads volumes, subvolumes and snapshot_dir", async () => 
           { path: "docs", name: "docs-snap" },
           { path: "photos" },
         ],
+        targets: [],
       },
       {
         path: "/mnt/backup",
         snapshotDir: "/srv/snaps",
         subvolumes: [],
+        targets: [],
       },
     ]);
   });
@@ -68,6 +70,78 @@ Deno.test("parseConfig applies a global snapshot_dir to volumes without their ow
     assertEquals(config.volumes.map((v) => v.snapshotDir), [
       "/var/snaps",
       ".snap",
+    ]);
+  });
+});
+
+Deno.test("parseConfig reads local targets and strips raw and send-receive keywords", async () => {
+  await withTempDir(async (dir) => {
+    const file = join(dir, "btrbk.conf");
+    await Deno.writeTextFile(
+      file,
+      [
+        "volume /data",
+        "  target /mnt/usb",
+        "  target raw /mnt/raw",
+        "  target send-receive /mnt/sr",
+        "  target ssh://backup.example/pool",
+        "  target backup.example:/pool",
+        "",
+      ].join("\n"),
+    );
+
+    const config = await parseConfig(file);
+
+    assertEquals(config.volumes[0].targets, [
+      "/mnt/usb",
+      "/mnt/raw",
+      "/mnt/sr",
+    ]);
+  });
+});
+
+Deno.test("parseConfig applies global targets to every volume", async () => {
+  await withTempDir(async (dir) => {
+    const file = join(dir, "btrbk.conf");
+    await Deno.writeTextFile(
+      file,
+      ["target /mnt/global", "volume /a", "volume /b", "  target /mnt/b", ""]
+        .join("\n"),
+    );
+
+    const config = await parseConfig(file);
+
+    assertEquals(config.volumes.map((v) => v.targets), [
+      ["/mnt/global"],
+      ["/mnt/global", "/mnt/b"],
+    ]);
+  });
+});
+
+Deno.test("parseConfig keeps snapshot_dir and target inside a subvolume on that subvolume", async () => {
+  await withTempDir(async (dir) => {
+    const file = join(dir, "btrbk.conf");
+    await Deno.writeTextFile(
+      file,
+      [
+        "volume /data",
+        "  snapshot_dir .snapshots",
+        "  subvolume docs",
+        "    snapshot_dir .docs-snaps",
+        "    target /mnt/docs",
+        "  subvolume photos",
+        "",
+      ].join("\n"),
+    );
+
+    const config = await parseConfig(file);
+    const [volume] = config.volumes;
+
+    assertEquals(volume.snapshotDir, ".snapshots");
+    assertEquals(volume.targets, []);
+    assertEquals(volume.subvolumes, [
+      { path: "docs", snapshotDir: ".docs-snaps", targets: ["/mnt/docs"] },
+      { path: "photos" },
     ]);
   });
 });

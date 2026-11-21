@@ -109,6 +109,24 @@ export interface DesktopBindings {
   runBackup(): Promise<RunBackupResult>;
   /** Lists the mounted btrfs filesystems with their subvolume trees via the Root Helper. */
   listBtrfsVolumes(): Promise<BtrfsVolume[]>;
+  /**
+   * Calculates the exclusive and total size of a snapshot or subvolume with
+   * `btrfs filesystem du` through the Root Helper. The path must be an absolute
+   * mount point path. Resolves with `error` set when the calculation fails or times out.
+   */
+  getSnapshotSize(path: string): Promise<SnapshotSize>;
+  /**
+   * Lists the snapshot storage locations (`snapshot_dir` and local `target`
+   * directories) of the GUI-managed btrbk configuration, with absolute paths.
+   * Rejects when the configuration is unreadable.
+   */
+  listSnapshotLocations(): Promise<SnapshotLocation[]>;
+  /**
+   * Lists the snapshots stored directly in one snapshot location, newest first.
+   * Sizes are not calculated; `size` is null. Resolves with an empty list when
+   * the location does not exist yet.
+   */
+  listSnapshots(path: string): Promise<SnapshotEntry[]>;
   /** Returns the state of the current or most recent backup run from the Root Helper. */
   getBackupStatus(): Promise<BackupStatus>;
   /** Returns the configured backup interval and whether the systemd timer is enabled. */
@@ -191,6 +209,45 @@ export interface SaveConfigResult {
   /** True when the file was validated and written. */
   ok: boolean;
   /** Reason the save was rejected, e.g. "config is incorrect: ...". */
+  error?: string;
+}
+
+/** Kind of a location that stores snapshots. */
+export type SnapshotLocationKind = "snapshot_dir" | "target";
+
+/** A directory that stores snapshots: a btrbk `snapshot_dir` or a local `target`. */
+export interface SnapshotLocation {
+  /** Whether the directory comes from `snapshot_dir` or `target`. */
+  kind: SnapshotLocationKind;
+  /** Mount point of the volume the location belongs to. */
+  volumePath: string;
+  /** Absolute path of the directory that stores snapshots. */
+  path: string;
+}
+
+/** One snapshot stored in a snapshot location. */
+export interface SnapshotEntry {
+  /** Directory name, e.g. `home.20261119T1200`. */
+  name: string;
+  /** Absolute path of the snapshot. */
+  path: string;
+  /** ISO timestamp parsed from the name, or null when the name carries none. */
+  date: string | null;
+  /** Size, or null until it is calculated. Listing never calculates sizes. */
+  size: SnapshotSize | null;
+}
+
+/** Space used by one path, as reported by `btrfs filesystem du -s`. */
+export interface SnapshotSize {
+  /** Absolute path that was measured. */
+  path: string;
+  /** Bytes referenced by the path, including data shared with other subvolumes. */
+  totalBytes: number;
+  /** Bytes referenced only by this path. */
+  exclusiveBytes: number;
+  /** Bytes shared with other paths of the same set; absent when not reported. */
+  sharedBytes?: number;
+  /** Reason the size could not be calculated, e.g. a timeout. Absent on success. */
   error?: string;
 }
 

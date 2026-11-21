@@ -10,8 +10,12 @@ const GLOB_CHARACTERS = /[*?[]/;
 type ParseState = {
   config: BtrbkConfig;
   currentVolume: VolumeConfig | null;
+  /** Subvolume block currently open below `currentVolume`, if any. */
+  currentSubvolume: SubvolumeConfig | null;
   /** `snapshot_dir` declared before the first volume; applies to later volumes. */
   globalSnapshotDir?: string;
+  /** `target` declared before the first volume; applies to every volume. */
+  globalTargets: string[];
 };
 
 /**
@@ -52,7 +56,12 @@ export async function parseConfigText(
   content: string,
   configPath: string,
 ): Promise<BtrbkConfig> {
-  const state: ParseState = { config: { volumes: [] }, currentVolume: null };
+  const state: ParseState = {
+    config: { volumes: [] },
+    currentVolume: null,
+    currentSubvolume: null,
+    globalTargets: [],
+  };
   await parseContent(content, configPath, state, [
     await canonicalPath(configPath),
   ]);
@@ -83,23 +92,48 @@ async function parseContent(
         path: value,
         snapshotDir: state.globalSnapshotDir,
         subvolumes: [],
+        targets: [...state.globalTargets],
       };
+      state.currentSubvolume = null;
       state.config.volumes.push(state.currentVolume);
-    } else if (key === "snapshot_dir") {
+    } else if (key === "subvolume") {
       if (state.currentVolume) {
+        const subvolume: SubvolumeConfig = { path: value };
+        state.currentVolume.subvolumes.push(subvolume);
+        state.currentSubvolume = subvolume;
+      }
+    } else if (key === "snapshot_dir") {
+      if (state.currentSubvolume) {
+        state.currentSubvolume.snapshotDir = value;
+      } else if (state.currentVolume) {
         state.currentVolume.snapshotDir = value;
       } else {
         state.globalSnapshotDir = value;
       }
-    } else if (key === "subvolume" && state.currentVolume) {
-      state.currentVolume.subvolumes.push({ path: value });
+    } else if (key === "target") {
+      applyTarget(value, state);
     } else if (
-      key === "snapshot_name" && state.currentVolume &&
-      state.currentVolume.subvolumes.length > 0
+      key === "snapshot_name" && state.currentSubvolume
     ) {
-      state.currentVolume.subvolumes[state.currentVolume.subvolumes.length - 1]
-        .name = value;
+      state.currentSubvolume.name = value;
     }
+  }
+}
+
+/**
+ * Records a `target` line. The optional `raw` or `send-receive` keyword is
+ * dropped. Only absolute local paths are kept; remote targets are skipped.
+ */
+function applyTarget(value: string, state: ParseState): void {
+  const path = value.replace(/^(raw|send-receive)\s+/, "").trim();
+  if (!path.startsWith("/")) return;
+  if (state.currentSubvolume) {
+    state.currentSubvolume.targets ??= [];
+    state.currentSubvolume.targets.push(path);
+  } else if (state.currentVolume) {
+    state.currentVolume.targets.push(path);
+  } else {
+    state.globalTargets.push(path);
   }
 }
 
@@ -261,6 +295,8 @@ export type VolumeConfig = {
   snapshotDir?: string;
   /** Subvolumes declared under this volume. */
   subvolumes: SubvolumeConfig[];
+  /** Local absolute target directories that receive backups of this volume. */
+  targets: string[];
 };
 
 /** A btrbk `subvolume` block. */
@@ -269,4 +305,8 @@ export type SubvolumeConfig = {
   path: string;
   /** Optional `snapshot_name` override. */
   name?: string;
+  /** Snapshot directory declared inside this subvolume block. */
+  snapshotDir?: string;
+  /** Local absolute target directories declared inside this subvolume block. */
+  targets?: string[];
 };

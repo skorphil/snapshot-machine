@@ -36,6 +36,11 @@ import {
 } from "./backup-run.ts";
 import { listBtrfsVolumes } from "./btrfs.ts";
 import {
+  assertValidSnapshotPath,
+  calculateSnapshotSize,
+  SnapshotSizeError,
+} from "./snapshot-size.ts";
+import {
   createDevController,
   createSystemctlController,
   resolveScheduleUnitDir,
@@ -81,7 +86,8 @@ function toDBusError(error: unknown): DBusError {
   if (
     error instanceof ConfigSyntaxError ||
     error instanceof ConfigFileError ||
-    error instanceof ScheduleError
+    error instanceof ScheduleError ||
+    error instanceof SnapshotSizeError
   ) {
     return new DBusError(ERR.INVALID_ARGS, error.message);
   }
@@ -247,6 +253,20 @@ class HelperInterface extends Interface {
     }
   }
 
+  /**
+   * Returns the exclusive, shared and total size of one absolute path as JSON.
+   * The calculation is bounded by a timeout; a timeout or btrfs failure is
+   * reported as a D-Bus error. Read-only, so no Polkit check is needed.
+   */
+  async GetSnapshotSize(path: string): Promise<string> {
+    try {
+      assertValidSnapshotPath(path);
+      return JSON.stringify(await calculateSnapshotSize(path));
+    } catch (error) {
+      throw toDBusError(error);
+    }
+  }
+
   /** Returns the status of the current or most recent backup run as JSON. */
   GetBackupStatus(): Promise<string> {
     return Promise.resolve(JSON.stringify(this.backups.getStatus()));
@@ -357,6 +377,7 @@ HelperInterface.configureMembers({
     SetSchedule: { inSignature: "sub", outSignature: "" },
     GetScheduleStatus: { inSignature: "", outSignature: "sss" },
     ListBtrfsVolumes: { inSignature: "", outSignature: "s" },
+    GetSnapshotSize: { inSignature: "s", outSignature: "s" },
   },
 });
 

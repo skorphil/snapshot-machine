@@ -23,6 +23,11 @@ import {
 } from "@snapshot-machine/backend/features/backup-schedule/index.ts";
 import { listBtrfsVolumes } from "@snapshot-machine/backend/features/btrfs-tree/index.ts";
 import {
+  getSnapshotSize,
+  listSnapshotLocations,
+  listSnapshots,
+} from "@snapshot-machine/backend/features/snapshot-size/index.ts";
+import {
   getBackupStatus,
   listConfigFiles,
   readConfigFile,
@@ -81,6 +86,9 @@ const bindings = {
   setSchedule: (interval, enabled) => setSchedule(interval, enabled),
   getScheduleStatus: () => getScheduleStatus(),
   listBtrfsVolumes: () => listBtrfsVolumes(),
+  getSnapshotSize: (path) => getSnapshotSize(path),
+  listSnapshotLocations: () => listSnapshotLocations(),
+  listSnapshots: (path) => listSnapshots(path),
 } satisfies DesktopBindings;
 
 win.bind("pickFolder", bindings.pickFolder);
@@ -101,6 +109,9 @@ win.bind("getSchedule", bindings.getSchedule);
 win.bind("setSchedule", bindings.setSchedule);
 win.bind("getScheduleStatus", bindings.getScheduleStatus);
 win.bind("listBtrfsVolumes", bindings.listBtrfsVolumes);
+win.bind("getSnapshotSize", bindings.getSnapshotSize);
+win.bind("listSnapshotLocations", bindings.listSnapshotLocations);
+win.bind("listSnapshots", bindings.listSnapshots);
 
 win.addEventListener("close", () => {
   logger.info("Window close event received. Exiting...");

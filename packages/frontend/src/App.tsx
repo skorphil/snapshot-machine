@@ -5,13 +5,14 @@ import { ConfigEditor } from "@/features/config-editor/index.ts";
 import { BackupRunControl } from "@/features/backup-run/index.ts";
 import { BackupScheduleControl } from "@/features/backup-schedule/index.ts";
 import { BtrfsTree } from "@/features/btrfs-tree/index.ts";
+import { SnapshotSizesView } from "@/features/snapshot-size/index.ts";
 import {
   DependencyBanner,
   useDependencyStatus,
 } from "@/features/dependency-status/index.ts";
 
 /** Top-level views switchable from the tab bar. */
-type View = "history" | "config";
+type View = "history" | "sizes" | "config";
 
 /** Root application component; reports dependency status and switches between the history and config editor views. */
 function App() {
@@ -33,6 +34,14 @@ function App() {
         </button>
         <button
           type="button"
+          className={view === "sizes" ? "view-tab active" : "view-tab"}
+          aria-pressed={view === "sizes"}
+          onClick={() => setView("sizes")}
+        >
+          Snapshot Sizes
+        </button>
+        <button
+          type="button"
           className={view === "config" ? "view-tab active" : "view-tab"}
           aria-pressed={view === "config"}
           onClick={() => setView("config")}
@@ -41,7 +50,9 @@ function App() {
         </button>
       </nav>
 
-      {view === "history" ? <HistoryView backupsEnabled={backupsEnabled} /> : (
+      {view === "history" && <HistoryView backupsEnabled={backupsEnabled} />}
+      {view === "sizes" && <SnapshotSizesView />}
+      {view === "config" && (
         <>
           <BackupScheduleControl />
           <BtrfsTree />
