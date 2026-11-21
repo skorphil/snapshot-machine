@@ -1,5 +1,6 @@
 import "./App.css";
 import { useViewRoute } from "@/shared/view-route/index.ts";
+import { NavSidebar } from "@/shared/ui/nav-sidebar/index.ts";
 import { HistoryView } from "@/features/folder-history/index.ts";
 import { ConfigEditor } from "@/features/config-editor/index.ts";
 import { BackupRunControl } from "@/features/backup-run/index.ts";
@@ -19,52 +20,28 @@ function App() {
   const [view, setView] = useViewRoute();
 
   return (
-    <main className="app">
-      <nav className="view-tabs" aria-label="Views">
-        <button
-          type="button"
-          className={view === "history" ? "view-tab active" : "view-tab"}
-          aria-pressed={view === "history"}
-          onClick={() => setView("history")}
-        >
-          Snapshots History
-        </button>
-        <button
-          type="button"
-          className={view === "sizes" ? "view-tab active" : "view-tab"}
-          aria-pressed={view === "sizes"}
-          onClick={() => setView("sizes")}
-        >
-          Snapshot Sizes
-        </button>
-        <button
-          type="button"
-          className={view === "config" ? "view-tab active" : "view-tab"}
-          aria-pressed={view === "config"}
-          onClick={() => setView("config")}
-        >
-          Config Editor
-        </button>
-      </nav>
-
-      {view === "history" && <HistoryView backupsEnabled={backupsEnabled} />}
-      {view === "sizes" && <SnapshotSizesView />}
-      {view === "config" && (
-        <>
-          <BackupScheduleControl />
-          <BtrfsTree />
-          <ConfigEditor
-            renderExtraControls={({ hasUnsavedChanges }) => (
-              <BackupRunControl
-                available={backupsEnabled}
-                hasUnsavedChanges={hasUnsavedChanges}
-              />
-            )}
-          />
-        </>
-      )}
-      <DependencyBanner state={dependencies} />
-    </main>
+    <div className="app">
+      <NavSidebar view={view} onSelectView={setView} />
+      <main className="app-content">
+        {view === "history" && <HistoryView backupsEnabled={backupsEnabled} />}
+        {view === "sizes" && <SnapshotSizesView />}
+        {view === "config" && (
+          <>
+            <BackupScheduleControl />
+            <BtrfsTree />
+            <ConfigEditor
+              renderExtraControls={({ hasUnsavedChanges }) => (
+                <BackupRunControl
+                  available={backupsEnabled}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                />
+              )}
+            />
+          </>
+        )}
+        <DependencyBanner state={dependencies} />
+      </main>
+    </div>
   );
 }
 

@@ -1,8 +1,17 @@
 .app {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: stretch;
   min-height: 100svh;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.app-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
   box-sizing: border-box;
   padding: 2rem 1.5rem;
 }
@@ -86,27 +95,6 @@
 .error {
   color: #ff6b6b;
   margin-bottom: 1rem;
-}
-
-.view-tabs {
-  display: flex;
-  gap: 0.25rem;
-  margin: 0 auto 1rem;
-  width: 100%;
-  max-width: 1200px;
-  border-bottom: 1px solid var(--border);
-}
-
-.view-tab {
-  margin-bottom: -1px;
-  border-radius: 6px 6px 0 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-}
-
-.view-tab.active {
-  border-bottom-color: var(--text);
-  font-weight: 600;
 }
 
 .config-editor {
