@@ -95,3 +95,36 @@ Deno.test("parseBtrfsVolumes rejects mount points that are not strings", () => {
     "[0].mountPoints",
   );
 });
+
+Deno.test("parseBtrfsVolumes accepts a snapshot-free tree where re-parented subvolumes sit at the nearest kept ancestor", () => {
+  const snapshotFree = [
+    {
+      device: "/dev/mapper/root",
+      mountPoints: ["/"],
+      subvolumes: [
+        {
+          id: 257,
+          parentId: 5,
+          path: "data",
+          mountPoints: [],
+          children: [
+            {
+              id: 261,
+              parentId: 257,
+              path: "data/.snap/1/work",
+              mountPoints: ["/work"],
+              children: [],
+            },
+          ],
+        },
+      ],
+      error: null,
+    },
+  ];
+  const volumes = parseBtrfsVolumes(JSON.stringify(snapshotFree));
+  assertEquals(volumes[0].subvolumes.map((n) => n.path), ["data"]);
+  assertEquals(
+    volumes[0].subvolumes[0].children.map((n) => n.path),
+    ["data/.snap/1/work"],
+  );
+});

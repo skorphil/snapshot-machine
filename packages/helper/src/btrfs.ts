@@ -29,11 +29,16 @@ export interface BtrfsMount {
   subvolId: number | null;
 }
 
-/** One row of `btrfs subvolume list`. */
+/** One row of `btrfs subvolume list`. UUID fields are null when not reported. */
 export interface SubvolumeRecord {
   id: number;
   parentId: number;
   path: string;
+  uuid: string | null;
+  /** UUID of the subvolume this one was snapshotted from. */
+  parentUuid: string | null;
+  /** UUID of the subvolume this one was received from via `btrfs send`. */
+  receivedUuid: string | null;
 }
 
 /** Runs `btrfs subvolume list` for a mount point; resolves with stdout or throws. */
@@ -128,9 +133,16 @@ export function groupByFilesystem(mounts: BtrfsMount[]): BtrfsFilesystem[] {
   return [...filesystems.values()];
 }
 
+/** Reads a UUID column of `btrfs subvolume list`; `-` means no value. */
+function uuidField(line: string, name: string): string | null {
+  const match = new RegExp(`\\b${name} (\\S+)`).exec(line);
+  if (!match || match[1] === "-") return null;
+  return match[1];
+}
+
 /**
- * Parses `btrfs subvolume list -a -p` output. Each line has the form
- * `ID 256 gen 9 parent 5 top level 5 path home`.
+ * Parses `btrfs subvolume list -a -p -u -q -R` output. Each line has the form
+ * `ID 256 gen 9 cgen 5 parent 5 top level 5 parent_uuid - received_uuid - uuid ... path home`.
  * The path is the last field, so it is read to the end of the line.
  */
 export function parseSubvolumeList(output: string): SubvolumeRecord[] {
@@ -145,9 +157,51 @@ export function parseSubvolumeList(output: string): SubvolumeRecord[] {
       id: Number(idMatch[1]),
       parentId: Number(parentMatch[1]),
       path: pathMatch[1].trim().replace(FS_TREE_PREFIX, ""),
+      uuid: uuidField(line, "uuid"),
+      parentUuid: uuidField(line, "parent_uuid"),
+      receivedUuid: uuidField(line, "received_uuid"),
     });
   }
   return records;
+}
+
+/**
+ * Reports whether a subvolume is a btrbk or btrfs snapshot: either it was
+ * created by a snapshot (has a parent UUID) or it was received by `btrfs send`.
+ */
+export function isSnapshot(record: SubvolumeRecord): boolean {
+  return record.parentUuid !== null || record.receivedUuid !== null;
+}
+
+/**
+ * Removes snapshot records. A kept subvolume whose parent was removed is
+ * re-parented to its nearest kept ancestor, or to the top-level tree (id 5)
+ * when none remains, so it stays in the tree.
+ */
+export function excludeSnapshots(
+  records: SubvolumeRecord[],
+): SubvolumeRecord[] {
+  const byId = new Map(records.map((record) => [record.id, record]));
+  const excluded = new Set(
+    records.filter(isSnapshot).map((record) => record.id),
+  );
+
+  const nearestKeptAncestor = (parentId: number): number => {
+    const visited = new Set<number>();
+    let current = parentId;
+    while (excluded.has(current) && !visited.has(current)) {
+      visited.add(current);
+      current = byId.get(current)!.parentId;
+    }
+    return current;
+  };
+
+  return records
+    .filter((record) => !excluded.has(record.id))
+    .map((record) => ({
+      ...record,
+      parentId: nearestKeptAncestor(record.parentId),
+    }));
 }
 
 /** Compares two paths in a stable, human-friendly order. */
@@ -197,7 +251,7 @@ export function buildSubvolumeTree(
 /** Runs `btrfs subvolume list` for a mount point and returns stdout. */
 async function runBtrfsList(mountPoint: string): Promise<string> {
   const { success, stdout, stderr } = await new Deno.Command("btrfs", {
-    args: ["subvolume", "list", "-a", "-p", mountPoint],
+    args: ["subvolume", "list", "-a", "-p", "-u", "-q", "-R", mountPoint],
     stdin: "null",
     stdout: "piped",
     stderr: "piped",
@@ -219,7 +273,8 @@ function errorMessage(error: unknown): string {
 }
 
 /**
- * Lists every mounted btrfs filesystem with its subvolume tree. A failure to
+ * Lists every mounted btrfs filesystem with its subvolume tree. Snapshots and
+ * received subvolumes are left out. A failure to
  * list one filesystem is reported in that volume's `error` field and does not
  * stop the others.
  *
@@ -242,9 +297,10 @@ export async function listBtrfsVolumes(
       mountPoints: fs.mountPoints,
     };
     try {
-      const records = parseSubvolumeList(
-        await listSubvolumes(fs.listingMountPoint),
-      ).filter((record) => record.id !== TOP_LEVEL_ID);
+      const records = excludeSnapshots(
+        parseSubvolumeList(await listSubvolumes(fs.listingMountPoint))
+          .filter((record) => record.id !== TOP_LEVEL_ID),
+      );
       volumes.push({
         ...base,
         subvolumes: buildSubvolumeTree(records, fs.mountsBySubvolId),
