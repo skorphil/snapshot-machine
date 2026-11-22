@@ -1,10 +1,10 @@
 import type React from "react";
 import {
   elapsedSeconds,
-  formatBytes,
   type SnapshotSizesState,
   useSnapshotSizes,
 } from "../model/index.ts";
+import { formatBytes } from "@/shared/format/index.ts";
 import { SnapshotLocationPanel } from "./SnapshotLocationPanel.tsx";
 
 /** Summary of the snapshot storage across all measured snapshots. */

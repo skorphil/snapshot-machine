@@ -4,5 +4,4 @@
  * @module
  */
 export { getSnapshotSize, listSnapshotLocations } from "./api/index.ts";
-export { formatBytes } from "./model/index.ts";
 export { SnapshotSizesView } from "./ui/index.ts";

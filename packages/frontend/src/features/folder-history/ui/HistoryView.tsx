@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import type { DateMode } from "../model/types.ts";
-import { isDateMode } from "../model/types.ts";
-import { formatDate, getDisplayDate } from "../model/dates.ts";
+// @ts-types="@/shared/types/css-module.d.ts"
+import styles from "./HistoryView.module.css";
+
+import { useEffect, useMemo, useState } from "react";
+import { deduplicateVersions } from "../model/file-snippet.ts";
 import type {
   FileHistoryEntry,
   FileVersion,
@@ -14,15 +15,13 @@ import {
 } from "../api/index.ts";
 import { logger } from "@/shared/logger.ts";
 import { logFromWebview } from "@/shared/bindings.ts";
+import { FileSearchBar } from "./FileSearchBar.tsx";
+import { FileSnippet } from "./FileSnippet.tsx";
+import { FileVersionSnippet } from "./FileVersionSnippet.tsx";
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
-
-type HistoryViewProps = {
-  /** False while required backup dependencies are missing or still being checked. */
-  backupsEnabled: boolean;
-};
 
 /**
  * Folder history explorer: lets the user pick a folder, scan its btrbk
@@ -30,10 +29,10 @@ type HistoryViewProps = {
  */
 export function HistoryView({ backupsEnabled }: HistoryViewProps) {
   const [path, setPath] = useState("");
-  const [history, setHistory] = useState<FileHistoryEntry[]>([]);
+  const [history, setHistory] = useState<FileHistoryEntry[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dateMode, setDateMode] = useState<DateMode>("arrival");
+  const [selectedIno, setSelectedIno] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,6 +49,11 @@ export function HistoryView({ backupsEnabled }: HistoryViewProps) {
       cancelled = true;
     };
   }, []);
+
+  const selectedEntry = useMemo(
+    () => history?.find((entry) => entry.ino === selectedIno) ?? null,
+    [history, selectedIno],
+  );
 
   const handleBrowse = async () => {
     try {
@@ -68,7 +72,9 @@ export function HistoryView({ backupsEnabled }: HistoryViewProps) {
     setLoading(true);
     setError(null);
     try {
-      setHistory(await listFolderHistory(path));
+      const entries = await listFolderHistory(path);
+      setHistory(entries);
+      setSelectedIno(null);
     } catch (e) {
       logFromWebview({
         context: "fetchHistory",
@@ -96,89 +102,85 @@ export function HistoryView({ backupsEnabled }: HistoryViewProps) {
   };
 
   return (
-    <div className="history-view">
-      <div className="controls">
-        <input
-          type="text"
-          value={path}
-          onChange={(e) => setPath(e.target.value)}
-          placeholder="Enter folder path"
-        />
-        <button type="button" onClick={handleBrowse}>
-          Browse...
-        </button>
-        <button
-          type="button"
-          onClick={fetchHistory}
-          disabled={loading || !backupsEnabled}
-        >
-          {loading ? "Loading..." : "Scan History"}
-        </button>
-        <select
-          value={dateMode}
-          onChange={(e) => {
-            const mode = e.target.value;
-            if (isDateMode(mode)) setDateMode(mode);
-          }}
-          title="Which timestamp to show for each version"
-        >
-          <option value="arrival">Arrival Date (birth/change)</option>
-          <option value="modified">Modification Date (mtime)</option>
-        </select>
-      </div>
+    <div className={styles.historyView}>
+      <FileSearchBar
+        path={path}
+        onPathChange={setPath}
+        onBrowse={handleBrowse}
+        onScan={fetchHistory}
+        scanDisabled={loading || !backupsEnabled || path.trim() === ""}
+        scanLabel={loading ? "Loading..." : "Scan"}
+      />
 
-      {error && <div className="error">{error}</div>}
+      {error && (
+        <div className={styles.error} role="alert">
+          {error}
+        </div>
+      )}
 
-      <table className="history-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Latest Date</th>
-            <th>Latest Snapshot</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {history.map((entry) => {
-            const latestVersion = entry.versions[0];
-            const latestDate = latestVersion
-              ? getDisplayDate(latestVersion, dateMode)
-              : null;
+      {history === null
+        ? (
+          <div className={styles.empty}>
+            Select a folder to view backups
+          </div>
+        )
+        : (
+          <div className={styles.panes}>
+            <section className={styles.list} aria-label="Files">
+              {history.length === 0 && (
+                <div className={styles.empty}>No files found in backups</div>
+              )}
+              {history.map((entry) => (
+                <FileSnippet
+                  key={entry.ino}
+                  entry={entry}
+                  selected={entry.ino === selectedIno}
+                  onSelect={() => setSelectedIno(entry.ino)}
+                />
+              ))}
+            </section>
 
-            return (
-              <tr key={entry.ino} className={entry.deleted ? "deleted" : ""}>
-                <td>{entry.name}</td>
-                <td>{entry.type}</td>
-                <td>{entry.deleted ? "Deleted" : "Active"}</td>
-                <td>{formatDate(latestDate)}</td>
-                <td>{entry.lastSeen}</td>
-                <td>
-                  <select
-                    disabled={!backupsEnabled}
-                    onChange={(e) => {
-                      const ver = entry.versions.find((v) =>
-                        v.snapshot === e.target.value
-                      );
-                      if (ver) {
-                        handleRestore(entry, ver);
-                      }
-                    }}
-                  >
-                    <option value="">Restore from...</option>
-                    {entry.versions.map((v) => (
-                      <option key={v.snapshot} value={v.snapshot}>
-                        {v.snapshot} ({formatDate(getDisplayDate(v, dateMode))})
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            <section className={styles.versions} aria-label="Versions">
+              {selectedEntry
+                ? (
+                  <>
+                    <h2 className={styles.versionsTitle}>
+                      <span className={styles.versionsName}>
+                        {selectedEntry.name}
+                      </span>
+                      {selectedEntry.deleted && (
+                        <span className={styles.deletedBadge}>Deleted</span>
+                      )}
+                    </h2>
+                    <ul className={styles.versionList}>
+                      {deduplicateVersions(selectedEntry.versions).map(
+                        (version) => (
+                          <FileVersionSnippet
+                            key={version.snapshot}
+                            version={version}
+                            restoreDisabled={!backupsEnabled}
+                            onRestore={() =>
+                              handleRestore(selectedEntry, version)}
+                          />
+                        ),
+                      )}
+                    </ul>
+                  </>
+                )
+                : (
+                  <div className={styles.empty}>
+                    Select a file to view its versions
+                  </div>
+                )}
+            </section>
+          </div>
+        )}
     </div>
   );
 }
+
+/** Props for {@link HistoryView}. */
+export type HistoryViewProps = {
+  /** False while required backup dependencies are missing or still being checked. */
+  backupsEnabled: boolean;
+};

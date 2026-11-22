@@ -1,3 +1,4 @@
+/// <reference lib="deno.ns" />
 import { assertEquals } from "@std/assert";
 import { formatBytes } from "./format-bytes.ts";
 

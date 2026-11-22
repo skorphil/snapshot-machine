@@ -5,10 +5,10 @@ import type {
 } from "@snapshot-machine/shared/types.ts";
 import {
   elapsedSeconds,
-  formatBytes,
   type MeasurementState,
   type SnapshotListState,
 } from "../model/index.ts";
+import { formatBytes } from "@/shared/format/index.ts";
 
 /** Human-readable label of a location kind. */
 const KIND_LABEL: Record<SnapshotLocation["kind"], string> = {

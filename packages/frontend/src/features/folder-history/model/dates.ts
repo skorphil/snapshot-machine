@@ -1,5 +1,4 @@
 import type { FileVersion } from "@snapshot-machine/shared/types.ts";
-import type { DateMode } from "./types.ts";
 
 /**
  * Parses a timestamp into a valid Date. Returns null for missing, empty,
@@ -19,16 +18,26 @@ export function parseValidDate(value: DateInput): Date | null {
   return Number.isFinite(date.getTime()) ? date : null;
 }
 
-export function getDisplayDate(v: FileVersion, mode: DateMode): Date | null {
-  const candidates: DateInput[] = mode === "arrival"
-    ? [v.birthtime, v.ctime, v.mtime, v.snapshotDate]
-    : [v.mtime, v.ctime, v.birthtime, v.snapshotDate];
+/**
+ * Returns the most recent valid timestamp of a version, considering modification,
+ * birth, change and snapshot times. Returns null when none of them is valid.
+ */
+export function getDisplayDate(v: FileVersion): Date | null {
+  const candidates: DateInput[] = [
+    v.mtime,
+    v.birthtime,
+    v.ctime,
+    v.snapshotDate,
+  ];
 
+  let latest: Date | null = null;
   for (const candidate of candidates) {
     const date = parseValidDate(candidate);
-    if (date) return date;
+    if (date && (latest === null || date.getTime() > latest.getTime())) {
+      latest = date;
+    }
   }
-  return null;
+  return latest;
 }
 
 /**

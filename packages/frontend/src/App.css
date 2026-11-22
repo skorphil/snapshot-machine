@@ -16,13 +16,6 @@
   padding: 2rem 1.5rem;
 }
 
-.history-view {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: left;
-}
-
 .dependency-banner {
   /* Pushes the banner to the bottom of .app when the content is shorter than the viewport. */
   margin: auto auto 0;
@@ -52,21 +45,6 @@
 .dependency-banner.error {
   color: #ff6b6b;
   border-color: #ff6b6b;
-}
-
-.controls {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.controls input {
-  flex: 1;
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background: var(--social-bg);
-  color: var(--text);
 }
 
 .history-table {
