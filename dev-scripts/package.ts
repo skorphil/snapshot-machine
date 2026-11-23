@@ -4,9 +4,10 @@
  *
  * Usage:
  *   deno task package
+ *   PRERELEASE=dev deno task package
  */
 
-const NFPM_CONFIG = "nfpm.yaml";
+const BASE_NFPM_CONFIG = "nfpm.yaml";
 const OUTPUT_DIR = "dist";
 const PACKAGERS = ["deb", "rpm"] as const;
 
@@ -66,20 +67,42 @@ for (
 
 await Deno.mkdir(OUTPUT_DIR, { recursive: true });
 
-for (const packager of PACKAGERS) {
-  console.log(`Packaging ${packager}...`);
-  const code = await run("nfpm", [
-    "package",
-    "--config",
-    NFPM_CONFIG,
-    "--packager",
-    packager,
-    "--target",
-    `${OUTPUT_DIR}/`,
-  ]);
-  if (code !== 0) {
-    console.error(`error: nfpm failed to build the ${packager} package.`);
-    Deno.exit(code);
+const prerelease = Deno.env.get("PRERELEASE");
+let configPath = BASE_NFPM_CONFIG;
+
+if (prerelease) {
+  const original = await Deno.readTextFile(BASE_NFPM_CONFIG);
+  configPath = `${OUTPUT_DIR}/nfpm.prerelease.yaml`;
+  await Deno.writeTextFile(
+    configPath,
+    `${original}\nprerelease: "${prerelease}"\n`,
+  );
+}
+
+try {
+  for (const packager of PACKAGERS) {
+    console.log(`Packaging ${packager}...`);
+    const code = await run("nfpm", [
+      "package",
+      "--config",
+      configPath,
+      "--packager",
+      packager,
+      "--target",
+      `${OUTPUT_DIR}/`,
+    ]);
+    if (code !== 0) {
+      console.error(`error: nfpm failed to build the ${packager} package.`);
+      Deno.exit(code);
+    }
+  }
+} finally {
+  if (configPath !== BASE_NFPM_CONFIG) {
+    try {
+      await Deno.remove(configPath);
+    } catch {
+      // Ignore cleanup error
+    }
   }
 }
 

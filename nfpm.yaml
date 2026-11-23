@@ -1,7 +1,7 @@
 name: "snapshot-machine"
 arch: "amd64"
 platform: "linux"
-version: "0.1.0"
+version: "0.0.1"
 section: "utils"
 priority: "optional"
 maintainer: "Snapshot Machine Team"
