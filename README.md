@@ -5,7 +5,13 @@
 A user-friendly desktop application for browsing Btrfs snapshot history and
 restoring files on Linux. It uses `btrbk` to manage backups.
 
-For contribution see [CONTRIBUTING.md](CONTRIBUTING.md)
+![snapshot machine](docs/hero-image.png)
+
+## Fedora
+
+```
+sudo dnf install path/to/snapshot-machine.rpm
+```
 
 ## Uninstall
 
@@ -15,3 +21,5 @@ to remove them:
 ```shell
 sudo rm -rf /etc/btrbk/gui.conf.d
 ```
+
+For contribution see [CONTRIBUTING.md](CONTRIBUTING.md)
