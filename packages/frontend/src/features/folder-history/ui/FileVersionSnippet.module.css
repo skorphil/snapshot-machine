@@ -28,6 +28,15 @@
   white-space: nowrap;
 }
 
+.renamed {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-style: italic;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .snapshot {
   overflow: hidden;
   color: var(--muted-foreground);

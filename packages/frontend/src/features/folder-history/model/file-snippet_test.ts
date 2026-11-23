@@ -24,6 +24,7 @@ function version(overrides: Partial<FileVersion> = {}): FileVersion {
     ctime: null,
     birthtime: null,
     size: 0,
+    renamedFrom: null,
     ...overrides,
   };
 }
@@ -119,7 +120,15 @@ Deno.test("summarizeVersion formats date, time and size", () => {
   assertEquals(summary, {
     dateTimeLabel: "07 Nov 2026, 14:30",
     sizeLabel: "1.5 KiB",
+    renamedLabel: null,
   });
+});
+
+Deno.test("summarizeVersion labels a renamed version with its previous name", () => {
+  const summary = summarizeVersion(
+    version({ renamedFrom: "old-report.txt", size: 10 }),
+  );
+  assertEquals(summary.renamedLabel, "Renamed from old-report.txt");
 });
 
 Deno.test("formatVersionDateTime joins date and 24-hour time", () => {
@@ -221,4 +230,110 @@ Deno.test("summarizeEntry counts only distinct versions", () => {
   );
   assertEquals(summary.versionCount, 2);
   assertEquals(formatVersionCount(summary.versionCount), "2 versions");
+});
+
+Deno.test("deduplicateVersions keeps only the rename when no content changed after it", () => {
+  const mtime = new Date(2026, 9, 1, 12, 0).toISOString();
+  const rename = version({
+    snapshot: "s2",
+    mtime,
+    size: 10,
+    renamedFrom: "old.txt",
+  });
+  const versions = [
+    rename,
+    version({ snapshot: "s1", mtime, size: 10 }),
+  ];
+  assertEquals(deduplicateVersions(versions), [rename]);
+});
+
+Deno.test("deduplicateVersions keeps the edit and the rename when content changed after the rename", () => {
+  const before = new Date(2026, 9, 1, 12, 0).toISOString();
+  const after = new Date(2026, 9, 2, 12, 0).toISOString();
+  const edit = version({ snapshot: "s3", mtime: after, size: 12 });
+  const rename = version({
+    snapshot: "s2",
+    mtime: before,
+    size: 10,
+    renamedFrom: "old.txt",
+  });
+  const versions = [
+    edit,
+    rename,
+    version({ snapshot: "s1", mtime: before, size: 10 }),
+  ];
+  assertEquals(deduplicateVersions(versions), [edit, rename]);
+});
+
+Deno.test("deduplicateVersions keeps every rename and drops plain copies of their states", () => {
+  const mtime = new Date(2026, 9, 1, 12, 0).toISOString();
+  const second = new Date(2026, 9, 2, 12, 0).toISOString();
+  const renameB = version({
+    snapshot: "s4",
+    mtime: second,
+    size: 10,
+    renamedFrom: "b.txt",
+  });
+  const renameA = version({
+    snapshot: "s2",
+    mtime,
+    size: 10,
+    renamedFrom: "a.txt",
+  });
+  const versions = [
+    renameB,
+    version({ snapshot: "s3", mtime: second, size: 10 }),
+    renameA,
+    version({ snapshot: "s1", mtime, size: 10 }),
+  ];
+  assertEquals(deduplicateVersions(versions), [renameB, renameA]);
+});
+
+Deno.test("deduplicateVersions keeps a rename without an mtime and its plain neighbours", () => {
+  const rename = version({
+    snapshot: "s2",
+    mtime: null,
+    size: 10,
+    renamedFrom: "old.txt",
+  });
+  const versions = [rename, version({ snapshot: "s1", mtime: null, size: 10 })];
+  assertEquals(deduplicateVersions(versions), versions);
+});
+
+Deno.test("summarizeEntry counts a rename alone as one version when the content is unchanged", () => {
+  const mtime = new Date(2026, 9, 1, 12, 0).toISOString();
+  const summary = summarizeEntry(
+    entry({
+      name: "new.txt",
+      path: "new.txt",
+      versions: [
+        version({ snapshot: "s2", mtime, size: 10, renamedFrom: "old.txt" }),
+        version({ snapshot: "s1", mtime, size: 10 }),
+      ],
+    }),
+  );
+  assertEquals(summary.stem, "new");
+  assertEquals(summary.versionCount, 1);
+});
+
+Deno.test("summarizeEntry counts a rename followed by an edit as two versions", () => {
+  const before = new Date(2026, 9, 1, 12, 0).toISOString();
+  const after = new Date(2026, 9, 2, 12, 0).toISOString();
+  const summary = summarizeEntry(
+    entry({
+      name: "new.txt",
+      path: "new.txt",
+      versions: [
+        version({ snapshot: "s3", mtime: after, size: 12 }),
+        version({
+          snapshot: "s2",
+          mtime: before,
+          size: 10,
+          renamedFrom: "old.txt",
+        }),
+        version({ snapshot: "s1", mtime: before, size: 10 }),
+      ],
+    }),
+  );
+  assertEquals(summary.versionCount, 2);
 });

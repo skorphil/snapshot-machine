@@ -76,23 +76,39 @@ export function formatVersionCount(count: number): string {
  * occurrence of each `(mtime, size)` pair is kept. Versions without an `mtime`
  * cannot be compared and are always kept.
  *
+ * Renames are always kept: a version with `renamedFrom` marks a name change
+ * that must stay visible. Its `(mtime, size)` state also absorbs plain versions
+ * with the same state, so a rename without any later content change shows as a
+ * single version. A subsequent content change has a different state and stays.
+ *
  * Expects versions newest first, as returned by the backend. Input order is
  * preserved and the input array is not mutated.
  */
 export function deduplicateVersions(versions: FileVersion[]): FileVersion[] {
+  const renameKeys = new Set<string>();
+  for (const version of versions) {
+    if (version.renamedFrom && version.mtime !== null) {
+      renameKeys.add(stateKey(version));
+    }
+  }
+
   const seen = new Set<string>();
   const unique: FileVersion[] = [];
   for (const version of versions) {
-    if (version.mtime === null) {
+    if (version.mtime === null || version.renamedFrom) {
       unique.push(version);
       continue;
     }
-    const key = JSON.stringify([version.mtime, version.size]);
-    if (seen.has(key)) continue;
+    const key = stateKey(version);
+    if (renameKeys.has(key) || seen.has(key)) continue;
     seen.add(key);
     unique.push(version);
   }
   return unique;
+}
+
+function stateKey(version: FileVersion): string {
+  return JSON.stringify([version.mtime, version.size]);
 }
 
 /**
@@ -113,11 +129,17 @@ export function summarizeEntry(entry: FileHistoryEntry): EntrySummary {
   };
 }
 
-/** Formats one version row: date, time and size. */
+/**
+ * Formats one version row: date, time, size and, when the version was reached
+ * by a rename, the previous name.
+ */
 export function summarizeVersion(version: FileVersion): VersionSummary {
   return {
     dateTimeLabel: formatVersionDateTime(getDisplayDate(version)),
     sizeLabel: formatBytes(version.size),
+    renamedLabel: version.renamedFrom
+      ? `Renamed from ${version.renamedFrom}`
+      : null,
   };
 }
 
@@ -136,4 +158,6 @@ export type EntrySummary = FileNameParts & {
 export type VersionSummary = {
   dateTimeLabel: string;
   sizeLabel: string;
+  /** "Renamed from <old name>" when the version was reached by a rename, else null. */
+  renamedLabel: string | null;
 };

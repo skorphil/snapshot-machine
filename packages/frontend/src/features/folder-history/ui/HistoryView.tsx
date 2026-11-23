@@ -32,7 +32,7 @@ export function HistoryView({ backupsEnabled }: HistoryViewProps) {
   const [history, setHistory] = useState<FileHistoryEntry[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedIno, setSelectedIno] = useState<string | null>(null);
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,8 +51,8 @@ export function HistoryView({ backupsEnabled }: HistoryViewProps) {
   }, []);
 
   const selectedEntry = useMemo(
-    () => history?.find((entry) => entry.ino === selectedIno) ?? null,
-    [history, selectedIno],
+    () => history?.find((entry) => entry.path === selectedPath) ?? null,
+    [history, selectedPath],
   );
 
   const handleBrowse = async () => {
@@ -74,7 +74,7 @@ export function HistoryView({ backupsEnabled }: HistoryViewProps) {
     try {
       const entries = await listFolderHistory(path);
       setHistory(entries);
-      setSelectedIno(null);
+      setSelectedPath(null);
     } catch (e) {
       logFromWebview({
         context: "fetchHistory",
@@ -132,10 +132,10 @@ export function HistoryView({ backupsEnabled }: HistoryViewProps) {
               )}
               {history.map((entry) => (
                 <FileSnippet
-                  key={entry.ino}
+                  key={entry.path}
                   entry={entry}
-                  selected={entry.ino === selectedIno}
-                  onSelect={() => setSelectedIno(entry.ino)}
+                  selected={entry.path === selectedPath}
+                  onSelect={() => setSelectedPath(entry.path)}
                 />
               ))}
             </section>
@@ -156,7 +156,7 @@ export function HistoryView({ backupsEnabled }: HistoryViewProps) {
                       {deduplicateVersions(selectedEntry.versions).map(
                         (version) => (
                           <FileVersionSnippet
-                            key={version.snapshot}
+                            key={`${version.snapshot}:${version.path}`}
                             version={version}
                             restoreDisabled={!backupsEnabled}
                             onRestore={() =>

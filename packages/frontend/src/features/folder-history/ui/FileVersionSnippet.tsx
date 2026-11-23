@@ -18,6 +18,9 @@ export function FileVersionSnippet({
     <li className={styles.snippet}>
       <div className={styles.info}>
         <span className={styles.dateTime}>{summary.dateTimeLabel}</span>
+        {summary.renamedLabel && (
+          <span className={styles.renamed}>{summary.renamedLabel}</span>
+        )}
         <span className={styles.snapshot} title={version.snapshot}>
           {version.snapshot}
         </span>

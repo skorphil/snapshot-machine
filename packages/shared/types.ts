@@ -1,14 +1,18 @@
-/** One logical file or directory tracked across snapshots, identified by inode. */
+/**
+ * One logical file or directory tracked across snapshots, identified by its
+ * name relative to the scanned folder. Versions with different inodes (atomic
+ * replacements) and renamed versions are consolidated into one entry.
+ */
 export type FileHistoryEntry = {
-  /** Base name of the entry. */
+  /** Base name of the entry, i.e. the name in the newest snapshot that holds it. */
   name: string;
-  /** Name relative to the scanned folder. */
+  /** Name relative to the scanned folder. Equal to `name` for direct children. */
   path: string;
-  /** Inode number used as the identity across snapshots, as a string to preserve 64-bit precision. */
+  /** Inode of the newest version, as a string to preserve 64-bit precision. */
   ino: string;
   /** Kind of filesystem entry. */
   type: "file" | "directory" | "other";
-  /** True when the inode is absent from the latest snapshot. */
+  /** True when no snapshot holding the folder contains this name in the newest one. */
   deleted: boolean;
   /** Name of the most recent snapshot the entry was seen in. */
   lastSeen: string;
@@ -32,6 +36,11 @@ export type FileVersion = {
   birthtime: string | null;
   /** Size in bytes. */
   size: number;
+  /**
+   * Previous name of the entry when this snapshot's version was reached by a
+   * rename, or null when the name did not change.
+   */
+  renamedFrom?: string | null;
 };
 
 /** External binaries the application requires. */

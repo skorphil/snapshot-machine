@@ -331,3 +331,89 @@ Deno.test({
     });
   },
 });
+
+Deno.test("listFolderHistory groups an atomic replacement under the same name into one entry", async () => {
+  await withVolume(async ({ volume, snaps }) => {
+    const older = join(snaps, "home.20261101T1000", "docs");
+    const newer = join(snaps, "home.20261102T1000", "docs");
+    await Deno.mkdir(older, { recursive: true });
+    await Deno.mkdir(newer, { recursive: true });
+    await Deno.writeTextFile(join(older, "report.txt"), "v1");
+    // Atomic save: write a temporary file and rename it over the original,
+    // so the name keeps pointing at a new inode.
+    await Deno.writeTextFile(join(newer, "report.txt.tmp"), "version two");
+    await Deno.rename(join(newer, "report.txt.tmp"), join(newer, "report.txt"));
+
+    const history = await listFolderHistory(join(volume, "docs"));
+    assertEquals(history.map((e) => e.name), ["report.txt"]);
+    const [entry] = history;
+    assertEquals(entry.deleted, false);
+    assertEquals(entry.lastSeen, "home.20261102T1000");
+    assertEquals(entry.versions.map((v) => v.snapshot), [
+      "home.20261102T1000",
+      "home.20261101T1000",
+    ]);
+    assertEquals(entry.versions.map((v) => v.renamedFrom ?? null), [
+      null,
+      null,
+    ]);
+  });
+});
+
+Deno.test("listFolderHistory marks an entry deleted only when its name is absent from the newest snapshot", async () => {
+  await withVolume(async ({ volume, snaps }) => {
+    const older = join(snaps, "home.20261101T1000", "docs");
+    const newer = join(snaps, "home.20261102T1000", "docs");
+    await Deno.mkdir(older, { recursive: true });
+    await Deno.mkdir(newer, { recursive: true });
+    await Deno.writeTextFile(join(older, "gone.txt"), "x");
+    await Deno.writeTextFile(join(newer, "kept.txt"), "y");
+
+    const history = await listFolderHistory(join(volume, "docs"));
+    const byName = Object.fromEntries(history.map((e) => [e.name, e]));
+    assertEquals(byName["gone.txt"].deleted, true);
+    assertEquals(byName["kept.txt"].deleted, false);
+  });
+});
+
+Deno.test("listFolderHistory links a renamed inode to the entry of its current name", async () => {
+  await withVolume(async ({ volume, snaps }) => {
+    const older = join(snaps, "home.20261101T1000", "docs");
+    const newer = join(snaps, "home.20261102T1000", "docs");
+    await Deno.mkdir(older, { recursive: true });
+    await Deno.mkdir(newer, { recursive: true });
+    // Same inode under old.txt in the older snapshot and new.txt in the newer one.
+    await Deno.writeTextFile(join(older, "old.txt"), "same content");
+    // Snapshots are read-only copies, so the same inode appears under the old
+    // name in the older snapshot and under the new name in the newer one.
+    await Deno.link(join(older, "old.txt"), join(newer, "new.txt"));
+
+    const history = await listFolderHistory(join(volume, "docs"));
+    assertEquals(history.map((e) => e.name), ["new.txt"]);
+    const [entry] = history;
+    assertEquals(entry.deleted, false);
+    assertEquals(entry.versions.map((v) => v.snapshot), [
+      "home.20261102T1000",
+      "home.20261101T1000",
+    ]);
+    assertEquals(entry.versions[0].renamedFrom, "old.txt");
+    assertEquals(entry.versions[1].renamedFrom ?? null, null);
+  });
+});
+
+Deno.test("listFolderHistory keeps hardlinked names in one snapshot as separate entries", async () => {
+  await withVolume(async ({ volume, snaps }) => {
+    const snap = join(snaps, "home.20261101T1000", "docs");
+    await Deno.mkdir(snap, { recursive: true });
+    await Deno.writeTextFile(join(snap, "a.txt"), "shared");
+    await Deno.link(join(snap, "a.txt"), join(snap, "b.txt"));
+
+    const history = await listFolderHistory(join(volume, "docs"));
+    assertEquals(history.map((e) => e.name).sort(), ["a.txt", "b.txt"]);
+    for (const entry of history) {
+      assertEquals(entry.deleted, false);
+      assertEquals(entry.versions.length, 1);
+      assertEquals(entry.versions[0].renamedFrom ?? null, null);
+    }
+  });
+});
